@@ -48,5 +48,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Bluetooth cihazlarina baglanmak icin izin gerekiyor</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>luetooth cihazlarina baglanmak icin izin gerekiyor</string>
+
 </dict>
 </plist>
