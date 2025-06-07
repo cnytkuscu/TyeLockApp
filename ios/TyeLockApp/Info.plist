@@ -28,7 +28,7 @@
 	<dict>
 	  <!-- Do not change NSAllowsArbitraryLoads to true, or you will risk app rejection! -->
 		<key>NSAllowsArbitraryLoads</key>
-		<false/>
+		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
@@ -52,6 +52,10 @@
 	<string>Bluetooth cihazlarina baglanmak icin izin gerekiyor</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
 	<string>luetooth cihazlarina baglanmak icin izin gerekiyor</string>
+	 <key>UIAppFonts</key>
+	<array>
+  	<string>Ionicons.ttf</string>
+	</array>
 
 </dict>
 </plist>
