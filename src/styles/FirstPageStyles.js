@@ -73,6 +73,20 @@ const firstPageStyles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
+  connectedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    width: '100%',
+  },
+
+  disconnectBtn: {
+    backgroundColor: '#FF5C5C',
+    borderRadius: 20,
+    padding: 6,
+    marginLeft: 10,
+  },
 });
 
 export default firstPageStyles;
