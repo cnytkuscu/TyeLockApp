@@ -10,6 +10,11 @@ import {LanguageProvider} from './src/context/LanguageContext'; // <-- Ekledik
 
 const Stack = createNativeStackNavigator();
 
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs([
+  'instanceHandle is null',
+  'Warning: ...', // örn. başka framework uyarıları
+]);
 const App = () => {
   return (
     <LanguageProvider>
