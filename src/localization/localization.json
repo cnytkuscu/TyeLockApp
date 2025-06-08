@@ -90,5 +90,29 @@
   "not_connected": {
     "TR": "Bağlantı Yok",
     "EN": "Not Connected"
+  },
+  "send_command": {
+    "TR": "Komut Gönder",
+    "EN": "Send Command"
+  },
+  "command_sent": {
+    "TR": "Komut Gönderildi",
+    "EN": "Command Sent"
+  },
+  "was_sent_successfully": {
+    "TR": "başarıyla gönderildi",
+    "EN": "was sent successfully"
+  },
+  "failed_to_send": {
+    "TR": "Gönderilemedi:",
+    "EN": "Failed to send:"
+  },
+  "no_writable_characteristic": {
+    "TR": "Yazılabilir bir karakteristik bulunamadı.",
+    "EN": "No writable characteristic found."
+  },
+  "send_color_command": {
+    "TR": "Yazılabilir bir karakteristik bulunamadı.",
+    "EN": "No writable characteristic found."
   }
 }

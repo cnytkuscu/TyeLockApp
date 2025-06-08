@@ -9,6 +9,7 @@ import {
 import LottieView from 'lottie-react-native';
 import {BleManager, State} from 'react-native-ble-plx';
 import Icon from 'react-native-vector-icons/Ionicons';
+import base64 from 'react-native-base64';
 
 import styles from '../styles/FirstPageStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
@@ -23,7 +24,8 @@ const FirstPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
-  const {language, setLanguage, t} = useLanguage();
+  const [writableCharacteristic, setWritableCharacteristic] = useState(null);
+  const {t} = useLanguage();
 
   const handleConnectPress = async () => {
     try {
@@ -44,26 +46,55 @@ const FirstPage = () => {
 
   const connectToDevice = async device => {
     try {
-      setIsConnecting(true); // başla
+      setIsConnecting(true);
+      console.log('🔌 Connecting to device...');
       const connectedDevice = await manager.connectToDevice(device.id);
+      console.log('✅ Connected to device:', connectedDevice.id);
+
       await connectedDevice.discoverAllServicesAndCharacteristics();
+      console.log('🔍 Services discovered');
+
+      const services = await connectedDevice.services();
+      for (const service of services) {
+        const characteristics = await service.characteristics();
+        for (const char of characteristics) {
+          if (char.isWritableWithResponse) {
+            console.log('🖋️ Found writable characteristic:', char.uuid);
+            setWritableCharacteristic(char);
+            break;
+          }
+        }
+      }
 
       setSelectedDevice(connectedDevice);
-      setStatus('Connected');
+      setStatus(t('connected'));
       setIsExpanded(false);
       manager.stopDeviceScan();
+
       Alert.alert(
         t('successfully_connected'),
         `${t('connected_to')} ${device.name}`,
       );
     } catch (error) {
-      Alert.alert(t('connection_error'), t('couldnt_connect_to_device'), [
-        {text: 'OK'},
-      ]);
+      console.log('❌ Connection error:', error);
+      Alert.alert(t('connection_error'), t('couldnt_connect_to_device'));
     } finally {
       setIsConnecting(false);
       setConnectingDeviceId(null);
     }
+ 
+    manager.monitorDeviceConnection(device.id, (error, disconnectedDevice) => {
+      if (error) {
+        console.log('⚠️ Monitor error:', error);
+        return;
+      }
+
+      if (!disconnectedDevice) {
+        console.log('🔌 Device disconnected unexpectedly');
+        setStatus(t('not_connected'));
+        setSelectedDevice(null);
+      }
+    });
   };
 
   const disconnectDevice = () => {
@@ -76,14 +107,28 @@ const FirstPage = () => {
             if (selectedDevice) {
               await manager.cancelDeviceConnection(selectedDevice.id);
             }
-            setStatus('Not Connected');
+            setStatus(t('not_connected'));
             setSelectedDevice(null);
+            setWritableCharacteristic(null);
           } catch (error) {
             Alert.alert(t('error_happened'), t('error_on_disconnecting'));
           }
         },
       },
     ]);
+  };
+
+  const sendColorCommand = async color => {
+    if (!writableCharacteristic) {
+      Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
+      return;
+    }
+
+    try {
+      await writableCharacteristic.writeWithResponse(base64.encode(color));
+    } catch (error) {
+      Alert.alert(t('error_happened'), t('couldnt_send_data'));
+    }
   };
 
   return (
@@ -99,15 +144,16 @@ const FirstPage = () => {
         }}
         resizeMode="cover"
       />
+
+      {/* Bağlantı Kutusu */}
       <View style={[styles.connectionStatusCard, isExpanded && {height: 300}]}>
         <Text style={styles.statusTitle}>{t('connection_status')}</Text>
 
-        {status === 'Connected' && selectedDevice ? (
+        {status === t('connected') && selectedDevice ? (
           <View style={styles.connectedContainer}>
             <View style={styles.deviceInfo}>
               <Text style={styles.deviceName}>
-                {t('connected_to')}
-                {selectedDevice.name || t('unknown_device')}
+                {t('connected_to')} {selectedDevice.name || t('unknown_device')}
               </Text>
             </View>
             <TouchableOpacity
@@ -120,7 +166,7 @@ const FirstPage = () => {
           <Text style={styles.statusText}>{status}</Text>
         )}
 
-        {status !== 'Connected' && (
+        {status !== t('connected') && (
           <TouchableOpacity style={styles.button} onPress={handleConnectPress}>
             <Text style={styles.buttonText}>{t('scan')}</Text>
           </TouchableOpacity>
@@ -128,7 +174,7 @@ const FirstPage = () => {
 
         {isExpanded && (
           <BluetoothScanner
-            isConnected={status === 'Connected'}
+            isConnected={status === t('connected')}
             isConnecting={isConnecting}
             setIsConnecting={setIsConnecting}
             connectingDeviceId={connectingDeviceId}
@@ -145,6 +191,30 @@ const FirstPage = () => {
           />
         )}
       </View>
+
+      {/* RGB Renk Butonları */}
+      {status === t('connected') && (
+        <View style={styles.colorControlCard}>
+          <Text style={styles.statusTitle}>{t('send_color_command')}</Text>
+          <View style={styles.colorButtonRow}>
+            <TouchableOpacity
+              style={[styles.colorButton, {backgroundColor: 'red'}]}
+              onPress={() => sendColorCommand('Red')}>
+              <Text style={styles.colorButtonText}>Red</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.colorButton, {backgroundColor: 'green'}]}
+              onPress={() => sendColorCommand('Green')}>
+              <Text style={styles.colorButtonText}>Green</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.colorButton, {backgroundColor: 'blue'}]}
+              onPress={() => sendColorCommand('Blue')}>
+              <Text style={styles.colorButtonText}>Blue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

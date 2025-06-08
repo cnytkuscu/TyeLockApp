@@ -112,6 +112,70 @@ const firstPageStyles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
+  commandCard: {
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  padding: 20,
+  marginTop: 20,
+  marginHorizontal: 20,
+  borderRadius: 16,
+  shadowColor: '#000',
+  shadowOpacity: 0.2,
+  shadowRadius: 8,
+  shadowOffset: {width: 0, height: 2},
+},
+commandTitle: {
+  fontSize: 18,
+  fontWeight: 'bold',
+  color: '#fff',
+  marginBottom: 10,
+  textAlign: 'center',
+},
+commandButtonsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+},
+commandButton: {
+  flex: 1,
+  marginHorizontal: 5,
+  paddingVertical: 12,
+  borderRadius: 12,
+  alignItems: 'center',
+},
+commandButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+},// styles/FirstPageStyles.js veya .ts içinde
+
+colorControlCard: {
+  backgroundColor: 'rgba(0,0,0,0.5)',
+  borderRadius: 16,
+  padding: 16,
+  marginTop: 20,
+  marginHorizontal: 20,
+  alignItems: 'center',
+},
+
+colorButtonRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  width: '100%',
+  marginTop: 10,
+},
+
+colorButton: {
+  paddingVertical: 10,
+  paddingHorizontal: 20,
+  borderRadius: 12,
+  marginHorizontal: 5,
+},
+
+colorButtonText: {
+  color: 'white',
+  fontWeight: 'bold',
+},
+
+
 });
 
 export default firstPageStyles;
