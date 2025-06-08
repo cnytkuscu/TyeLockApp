@@ -13,8 +13,9 @@ import base64 from 'react-native-base64';
 
 import styles from '../styles/FirstPageStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
-import {BluetoothContext} from '../context/BluetoothContext';
+import {BluetoothContext} from '../context/BluetoothContext'; 
 import {useLanguage} from '../context/LanguageContext';
+ 
 
 const FirstPage = () => {
   const {status, setStatus, selectedDevice, setSelectedDevice} =
@@ -25,7 +26,7 @@ const FirstPage = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
-  const {t} = useLanguage();
+  const {t} = useLanguage(); 
 
   const handleConnectPress = async () => {
     try {
@@ -82,7 +83,7 @@ const FirstPage = () => {
       setIsConnecting(false);
       setConnectingDeviceId(null);
     }
- 
+
     manager.monitorDeviceConnection(device.id, (error, disconnectedDevice) => {
       if (error) {
         console.log('⚠️ Monitor error:', error);
@@ -199,13 +200,13 @@ const FirstPage = () => {
           <View style={styles.colorButtonRow}>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'red'}]}
-              onPress={() => sendColorCommand('Red')}>
-              <Text style={styles.colorButtonText}>Red</Text>
+              onPress={() => sendColorCommand('TurnOn')}>
+              <Text style={styles.colorButtonText}>TurnOn</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'green'}]}
-              onPress={() => sendColorCommand('Green')}>
-              <Text style={styles.colorButtonText}>Green</Text>
+              onPress={() => sendColorCommand('TurnOff')}>
+              <Text style={styles.colorButtonText}>TurnOff</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'blue'}]}
@@ -215,6 +216,7 @@ const FirstPage = () => {
           </View>
         </View>
       )}
+       
     </View>
   );
 };
