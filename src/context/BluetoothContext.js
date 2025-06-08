@@ -11,7 +11,7 @@ export const BluetoothProvider = ({children}) => {
 
   useEffect(() => {
     setStatus(t('not_connected'));
-  }, [t]); // dil değişince tetiklenir
+  }, [t]);
 
   return (
     <BluetoothContext.Provider
