@@ -1,9 +1,10 @@
 import React, {createContext, useState} from 'react';
-
+import {useLanguage} from '../context/LanguageContext';
 export const BluetoothContext = createContext();
 
 export const BluetoothProvider = ({children}) => {
-  const [status, setStatus] = useState('Not Connected');
+  const {language, setLanguage, t} = useLanguage();
+  const [status, setStatus] = useState(t('not_connected'));
   const [selectedDevice, setSelectedDevice] = useState(null);
 
   return (
