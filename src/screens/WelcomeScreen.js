@@ -10,8 +10,11 @@ import styles from '../styles/WelcomePageStyles';
 import {useNavigation} from '@react-navigation/native';
 import LottieView from 'lottie-react-native';
 
+import {useLanguage} from '../context/LanguageContext';  
+
 const WelcomeScreen = () => {
   const navigation = useNavigation();
+  const {language, setLanguage, t} = useLanguage();  
 
   const handlePress = () => {
     navigation.navigate('FirstPage');
@@ -30,18 +33,39 @@ const WelcomeScreen = () => {
           position: 'absolute',
           top: 0,
           left: 0,
-          bottom:0,
-          right : 0
+          bottom: 0,
+          right: 0,
         }}
         resizeMode="cover"
       />
       <View style={styles.overlay}>
-          <Text style={styles.title}>TyeLock ile Harika bir Serüvene Hazır mısın?</Text>
-          
-          <TouchableOpacity style={styles.button} onPress={handlePress}>
-            <Text style={styles.buttonText}>Giriş</Text>
+        <Text style={styles.title}>{t('welcome_title')}</Text>
+
+        <TouchableOpacity style={styles.button} onPress={handlePress}>
+          <Text style={styles.buttonText}>{t('welcome_button')}</Text>
+        </TouchableOpacity>
+
+        {/* Dil Seçimi Butonları */}
+        <View style={styles.languageButtons}>
+          <TouchableOpacity
+            style={[
+              styles.langButton,
+              language === 'TR' && styles.langButtonSelected,
+            ]}
+            onPress={() => setLanguage('TR')}>
+            <Text style={styles.langButtonText}>🇹🇷</Text>
           </TouchableOpacity>
-        </View> 
+
+          <TouchableOpacity
+            style={[
+              styles.langButton,
+              language === 'EN' && styles.langButtonSelected,
+            ]}
+            onPress={() => setLanguage('EN')}>
+            <Text style={styles.langButtonText}>🇬🇧</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };

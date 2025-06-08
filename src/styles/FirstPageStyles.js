@@ -46,15 +46,21 @@ const firstPageStyles = StyleSheet.create({
     color: '#FFA500',
   },
   button: {
-    backgroundColor: '#2196F3',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
-    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '500',
   },
   buttonDisabled: {
     backgroundColor: '#A0A0A0',
@@ -82,10 +88,29 @@ const firstPageStyles = StyleSheet.create({
   },
 
   disconnectBtn: {
-    backgroundColor: '#FF5C5C',
     borderRadius: 20,
     padding: 6,
-    marginLeft: 10,
+    marginLeft: 16,
+  },
+  connectedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    marginTop: 10,
+  }, 
+  deviceInfo: {
+    flex: 1,
+    justifyContent: 'center',
+  }, 
+  deviceName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

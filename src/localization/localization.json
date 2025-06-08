@@ -1,0 +1,94 @@
+{
+  "welcome_title": {
+    "TR": "TyeLock ile harika bir serüvene hazır mısın?",
+    "EN": "Are you ready to have new experience with TyeLock?"
+  },
+  "connect_button": {
+    "TR": "Bağlan",
+    "EN": "Connect"
+  },
+  "bluetooth_off_alert_title": {
+    "TR": "Bluetooth Kapalı",
+    "EN": "Bluetooth is Off"
+  },
+  "bluetooth_off_alert_message": {
+    "TR": "Lütfen Bluetooth’u açarak tekrar deneyin.",
+    "EN": "Please turn on Bluetooth and try again."
+  },
+  "welcome_button": {
+    "TR": "Giriş",
+    "EN": "Enter"
+  },
+  "connection_status": {
+    "TR": "TyeLock Bağlantı Durumu",
+    "EN": "TyeLock Connection Status"
+  },
+  "error_happened": {
+    "TR": "Bir hata oluştu",
+    "EN": "An Error happened."
+  },
+  "bluetooth_control_error": {
+    "TR": "Bluetooth kontrolü sırasında bir sorun oluştu.",
+    "EN": "An Error happened while controlling the Bluetooth."
+  },
+  "successfully_connected": {
+    "TR": "Bağlantı Başarılı!",
+    "EN": "Successfully Connected!"
+  },
+  "connected_to": {
+    "TR": "Bağlanılan cihaz : ",
+    "EN": "Connected to : "
+  },
+  "connection_error": {
+    "TR": "Bağlantı Hatası ",
+    "EN": "Connection Error"
+  },
+  "couldnt_connect_to_device": {
+    "TR": "Cihaz bağlantısı sağlanamadı",
+    "EN": "Couldn't connect to device."
+  },
+  "disconnect_device": {
+    "TR": "Bağlantıyı Kes",
+    "EN": "Disconnect Device"
+  },
+  "sure_disconnect_device": {
+    "TR": "Bağlantıyı kesmek istediğine emin misin ?",
+    "EN": "Would you like to disconnect from device ?"
+  },
+  "cancel": {
+    "TR": "İptal",
+    "EN": "Cancel"
+  },
+  "yes": {
+    "TR": "Evet",
+    "EN": "Yes"
+  },
+  "error_on_disconnecting": {
+    "TR": "Bağlantı kesilirken bir hata oluştu.",
+    "EN": "Error occured while disconnecting from device."
+  },
+  "scan": {
+    "TR": "Tara",
+    "EN": "Scan"
+  },
+  "connected": {
+    "TR": "Tara",
+    "EN": "Scan"
+  },
+  "nearby_bluetooth_devices": {
+    "TR": "Yakındaki Bluetooth Cihazları",
+    "EN": "Nearby Bluetooth Devices"
+  },
+  "no_device_found": {
+    "TR": "Hiçbir Bluetooth cihazı bulunamadı.",
+    "EN": "No Bluetooth devices found."
+  },
+  "connecting": {
+    "TR": "Bağlanılıyor...",
+    "EN": "Connecting..."
+  },
+  "not_connected": {
+    "TR": "Bağlantı Yok",
+    "EN": "Not Connected"
+  }
+}

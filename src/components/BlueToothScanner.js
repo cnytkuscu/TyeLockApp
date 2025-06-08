@@ -9,8 +9,9 @@ import {
 } from 'react-native';
 import {BleManager} from 'react-native-ble-plx';
 
-const manager = new BleManager();
+import {useLanguage} from '../context/LanguageContext';
 
+const manager = new BleManager();
 
 const BluetoothScanner = ({
   onDeviceSelect,
@@ -23,6 +24,7 @@ const BluetoothScanner = ({
   const [devices, setDevices] = useState([]);
   const intervalRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const {language, setLanguage, t} = useLanguage();
 
   useEffect(() => {
     if (!isConnected) {
@@ -37,17 +39,11 @@ const BluetoothScanner = ({
 
   const startScanningLoop = () => {
     intervalRef.current = setInterval(() => {
-      console.log('🔄 Yeni tarama döngüsü başlatıldı');
-
       manager.startDeviceScan(null, null, (error, device) => {
         if (error) {
-          console.log('Tarama hatası:', error.message);
           return;
         }
-
         if (device?.name) {
-          console.log('Cihaz bulundu:', device.name);
-
           setDevices(prev => {
             const exists = prev.find(d => d.id === device.id);
             return exists ? prev : [...prev, device];
@@ -55,9 +51,7 @@ const BluetoothScanner = ({
         }
       });
 
-      // 4 saniye tarayıp durdur
       setTimeout(() => {
-        console.log('🛑 Tarama durduruldu');
         manager.stopDeviceScan();
         setIsLoading(false);
       }, 4000);
@@ -73,7 +67,7 @@ const BluetoothScanner = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Nearby Bluetooth Devices</Text>
+      <Text style={styles.title}>{t('nearby_bluetooth_devices')}</Text>
 
       {isLoading ? (
         <ActivityIndicator
@@ -82,7 +76,7 @@ const BluetoothScanner = ({
           style={{marginBottom: 15}}
         />
       ) : devices.length === 0 ? (
-        <Text style={{color: '#ccc', marginTop: 10}}>No Device found.</Text>
+        <Text style={{color: '#ccc', marginTop: 10}}>{t('no_device_found')}</Text>
       ) : null}
 
       <FlatList
@@ -100,7 +94,7 @@ const BluetoothScanner = ({
           >
             <Text style={styles.deviceName}>
               {isConnecting && connectingDeviceId === item.id
-                ? 'Connecting...'
+                ? t('connecting')
                 : item.name}
             </Text>
           </TouchableOpacity>
