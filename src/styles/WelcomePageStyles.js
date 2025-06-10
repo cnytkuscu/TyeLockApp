@@ -5,7 +5,7 @@ const {width, height} = Dimensions.get('window');
 const welcomePageStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000', // Yedek renk
+    backgroundColor: '#000', 
   },
   background: {
     flex: 1,
@@ -22,9 +22,9 @@ const welcomePageStyles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 32, // Daha büyük
-    fontWeight: 'bold', // Kalınlaştır
-    color: '#FFFFFF', // Beyaz veya pastel uyumlu bir ton
+    fontSize: 32, 
+    fontWeight: 'bold', 
+    color: '#FFFFFF', 
     textAlign: 'center',
     marginBottom: 40,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',  

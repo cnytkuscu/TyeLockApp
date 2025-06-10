@@ -4,7 +4,7 @@ import localization from '../localization/localization.json';
 export const LanguageContext = createContext();
 
 export const LanguageProvider = ({children}) => {
-  const [language, setLanguage] = useState('TR'); // default Türkçe
+  const [language, setLanguage] = useState('TR'); 
 
   const t = (key) => {
     return localization[key]?.[language] || key;

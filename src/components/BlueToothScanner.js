@@ -28,7 +28,7 @@ const BluetoothScanner = ({
 
   useEffect(() => {
     if (!isConnected) {
-      setIsLoading(true); // loading başlasın
+      setIsLoading(true); 
       startScanningLoop();
     }
 
@@ -90,7 +90,7 @@ const BluetoothScanner = ({
               setConnectingDeviceId(item.id);
               onDeviceSelect(item);
             }}
-            disabled={isConnecting} // bağlantı sırasında tıklamayı engelle
+            disabled={isConnecting} 
           >
             <Text style={styles.deviceName}>
               {isConnecting && connectingDeviceId === item.id

@@ -6,14 +6,14 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import Dashboard from './src/screens/DashboardScreen';
 
 import {BluetoothProvider} from './src/context/BluetoothContext';
-import {LanguageProvider} from './src/context/LanguageContext'; // <-- Ekledik
+import {LanguageProvider} from './src/context/LanguageContext';
 
 const Stack = createNativeStackNavigator();
 
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs([
   'instanceHandle is null',
-  'Warning: ...', // örn. başka framework uyarıları
+  'Warning: ...',
 ]);
 const App = () => {
   return (
