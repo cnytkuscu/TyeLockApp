@@ -2,7 +2,7 @@ import {StyleSheet, Dimensions} from 'react-native';
 
 const {width, height} = Dimensions.get('window');
 
-const firstPageStyles = StyleSheet.create({
+const dashboardStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#EAEAEA',
@@ -145,7 +145,7 @@ commandButtonText: {
   color: '#fff',
   fontWeight: 'bold',
   fontSize: 16,
-},// styles/FirstPageStyles.js veya .ts içinde
+},
 
 colorControlCard: {
   backgroundColor: 'rgba(0,0,0,0.5)',
@@ -178,4 +178,4 @@ colorButtonText: {
 
 });
 
-export default firstPageStyles;
+export default dashboardStyles;

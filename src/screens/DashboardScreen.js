@@ -17,7 +17,7 @@ import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
  
 
-const FirstPage = () => {
+const Dashboard = () => {
   const {status, setStatus, selectedDevice, setSelectedDevice} =
     useContext(BluetoothContext);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -221,4 +221,4 @@ const FirstPage = () => {
   );
 };
 
-export default FirstPage;
+export default Dashboard;

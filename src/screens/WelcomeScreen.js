@@ -17,7 +17,7 @@ const WelcomeScreen = () => {
   const {language, setLanguage, t} = useLanguage();  
 
   const handlePress = () => {
-    navigation.navigate('FirstPage');
+    navigation.navigate('Dashboard');
   };
 
   return (
