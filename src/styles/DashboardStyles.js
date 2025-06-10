@@ -8,8 +8,8 @@ const dashboardStyles = StyleSheet.create({
     backgroundColor: '#EAEAEA',
     alignItems: 'center',
     justifyContent: 'center',
-    justifyContent: 'flex-start', // EKRANIN ÜSTÜNE ALIR
-    paddingTop: 60, // Üstten boşluk bırak
+    justifyContent: 'flex-start', 
+    paddingTop: 60, 
   },
   connectionStatusCard: {
     backgroundColor: 'rgba(16, 147, 203, 0)',

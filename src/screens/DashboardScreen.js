@@ -11,7 +11,7 @@ import {BleManager, State} from 'react-native-ble-plx';
 import Icon from 'react-native-vector-icons/Ionicons';
 import base64 from 'react-native-base64';
 
-import styles from '../styles/FirstPageStyles';
+import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
 import {BluetoothContext} from '../context/BluetoothContext'; 
 import {useLanguage} from '../context/LanguageContext';

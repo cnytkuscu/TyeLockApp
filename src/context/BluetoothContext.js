@@ -7,7 +7,7 @@ export const BluetoothProvider = ({children}) => {
 
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [status, setStatus] = useState(t('not_connected'));
-  const [writeCharacteristic, setWriteCharacteristic] = useState(null); // ✅ EKLENDİ
+  const [writeCharacteristic, setWriteCharacteristic] = useState(null); 
 
   return (
     <BluetoothContext.Provider
@@ -17,7 +17,7 @@ export const BluetoothProvider = ({children}) => {
         selectedDevice,
         setSelectedDevice,
         writeCharacteristic,
-        setWriteCharacteristic, // ✅ EKLENDİ
+        setWriteCharacteristic, 
       }}>
       {children}
     </BluetoothContext.Provider>
