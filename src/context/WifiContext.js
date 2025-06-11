@@ -7,18 +7,17 @@ export const WifiProvider = ({ children }) => {
   const [selectedSSID, setSelectedSSID] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
 
-  const value = {
-    wifiList,
-    setWifiList,
-    selectedSSID,
-    setSelectedSSID,
-    wifiPassword,
-    setWifiPassword,
-  };
-
   return (
-    <WifiContext.Provider value={value}>
-      <>{children}</>
+    <WifiContext.Provider
+      value={{
+        wifiList,
+        setWifiList,
+        selectedSSID,
+        setSelectedSSID,
+        wifiPassword,
+        setWifiPassword,
+      }}>
+      {children}
     </WifiContext.Provider>
   );
 };

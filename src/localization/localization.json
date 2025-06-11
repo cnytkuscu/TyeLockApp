@@ -114,5 +114,37 @@
   "send_bt_command": {
     "TR": "Fonksiyon Butonları",
     "EN": "Function Buttons"
+  },
+  "turn_on": {
+    "TR": "Aç",
+    "EN": "Turn On"
+  },
+  "turn_off": {
+    "TR": "Kapat",
+    "EN": "Turn Off"
+  },
+  "scan_wifi": {
+    "TR": "Wi-Fi Tara",
+    "EN": "Wi-Fi Scan"
+  },
+  "available_networks": {
+    "TR": "Uygun Ağlar",
+    "EN": "Available Networks"
+  },
+  "wifi_password": {
+    "TR": "Ağ Şifresini Giriniz",
+    "EN": "Please Type Network Password"
+  },
+  "send": {
+    "TR": "Gönder",
+    "EN": "Send"
+  },
+  "sent": {
+    "TR": "Gönderildi",
+    "EN": "Sent"
+  },
+  "wifi_info_sent": {
+    "TR": "Bağlantı Talebi Gönderildi",
+    "EN": "Connection Request Sent"
   }
 }
