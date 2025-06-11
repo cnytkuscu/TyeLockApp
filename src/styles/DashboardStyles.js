@@ -174,7 +174,38 @@ colorButtonText: {
   color: 'white',
   fontWeight: 'bold',
 },
+wifiListCard: {
+  marginTop: 20,
+  padding: 10,
+  backgroundColor: 'rgba(255,255,255,0.1)',
+  borderRadius: 10,
+},
 
+wifiItem: {
+  paddingVertical: 8,
+  borderBottomWidth: 1,
+  borderBottomColor: '#ccc',
+},
+
+wifiText: {
+  color: '#fff',
+  fontSize: 16,
+},
+input: {
+  backgroundColor: '#fff',
+  padding: 10,
+  borderRadius: 8,
+  marginVertical: 10,
+  color: '#000',
+},
+
+sendButton: {
+  backgroundColor: '#007AFF',
+  padding: 10,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginTop: 5,
+},
 
 });
 

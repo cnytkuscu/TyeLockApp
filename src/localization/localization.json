@@ -111,8 +111,8 @@
     "TR": "Yazılabilir bir karakteristik bulunamadı.",
     "EN": "No writable characteristic found."
   },
-  "send_color_command": {
-    "TR": "Yazılabilir bir karakteristik bulunamadı.",
-    "EN": "No writable characteristic found."
+  "send_bt_command": {
+    "TR": "Fonksiyon Butonları",
+    "EN": "Function Buttons"
   }
 }
