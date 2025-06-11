@@ -28,7 +28,7 @@ const BluetoothScanner = ({
 
   useEffect(() => {
     if (!isConnected) {
-      setIsLoading(true); 
+      setIsLoading(true);
       startScanningLoop();
     }
 
@@ -76,30 +76,34 @@ const BluetoothScanner = ({
           style={{marginBottom: 15}}
         />
       ) : devices.length === 0 ? (
-        <Text style={{color: '#ccc', marginTop: 10}}>{t('no_device_found')}</Text>
+        <Text style={{color: '#ccc', marginTop: 10}}>
+          {t('no_device_found')}
+        </Text>
       ) : null}
 
-      <FlatList
-        data={devices}
-        keyExtractor={item => item.id}
-        renderItem={({item}) => (
-          <TouchableOpacity
-            style={styles.deviceItem}
-            onPress={() => {
-              setIsConnecting(true);
-              setConnectingDeviceId(item.id);
-              onDeviceSelect(item);
-            }}
-            disabled={isConnecting} 
-          >
-            <Text style={styles.deviceName}>
-              {isConnecting && connectingDeviceId === item.id
-                ? t('connecting')
-                : item.name}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+      <View style={styles.listContainer}>
+        <FlatList
+          data={devices}
+          keyExtractor={item => item.id}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              style={styles.deviceItem}
+              onPress={() => {
+                setIsConnecting(true);
+                setConnectingDeviceId(item.id);
+                onDeviceSelect(item);
+              }}
+              disabled={isConnecting}>
+              <Text style={styles.deviceName}>
+                {isConnecting && connectingDeviceId === item.id
+                  ? t('connecting')
+                  : item.name}
+              </Text>
+            </TouchableOpacity>
+          )}
+          showsVerticalScrollIndicator={true}
+        />
+      </View>
 
       {isConnecting && (
         <ActivityIndicator
@@ -113,15 +117,37 @@ const BluetoothScanner = ({
 };
 
 const styles = StyleSheet.create({
-  container: {marginTop: 10},
-  title: {fontSize: 16, fontWeight: 'bold', color: '#fff', marginBottom: 10},
-  deviceItem: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
+  container: {
+    flex: 1,
+    marginTop: 10,
+    paddingHorizontal: 16,
   },
-  deviceName: {color: '#000'},
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 12,
+  },
+  listContainer: {
+     flexGrow: 1, // burada flex:1 veriyoruz ki alan büyüsün, FlatList içeriği uzadıkça
+    marginBottom: 10, // opsiyonel, alt boşluk için
+  },
+  deviceItem: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  deviceName: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
 
 export default BluetoothScanner;

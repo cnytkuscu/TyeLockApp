@@ -38,6 +38,17 @@ const Dashboard = () => {
     wifiPassword,
     setWifiPassword,
   } = useContext(WifiContext);
+  const [isTurnOnActive, setIsTurnOnActive] = useState(false);
+
+  const handleBTCommand = command => {
+    sendBTCommand(command);
+
+    if (command === 'TurnOn') {
+      setIsTurnOnActive(true);
+    } else if (command === 'TurnOff') {
+      setIsTurnOnActive(false);
+    }
+  };
 
   const handleConnectPress = async () => {
     try {
@@ -177,7 +188,7 @@ const Dashboard = () => {
               }
             });
 
-            return; 
+            return;
           }
         }
       }
@@ -218,7 +229,7 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
         ) : (
-          <Text style={styles.statusText}>{status}</Text>
+          <Text style={styles.statusText}>{t('not_connected')}</Text>
         )}
 
         {status !== t('connected') && (
@@ -237,32 +248,45 @@ const Dashboard = () => {
             onDeviceSelect={device => connectToDevice(device)}
           />
         )}
-
-        {isLoading && (
-          <ActivityIndicator
-            size="large"
-            color="#ffffff"
-            style={{marginTop: 10}}
-          />
-        )}
       </View>
 
       {status === t('connected') && (
-        <View style={styles.colorControlCard}>
+        <View style={styles.deviceControlCard}>
           <Text style={styles.statusTitle}>{t('send_bt_command')}</Text>
           <View style={styles.colorButtonRow}>
             <TouchableOpacity
-              style={[styles.colorButton, {backgroundColor: 'red'}]}
-              onPress={() => sendBTCommand('TurnOn')}>
+              style={[
+                styles.colorButton,
+                {
+                  backgroundColor: isTurnOnActive
+                    ? 'rgba(16, 147, 203, 0.5)'
+                    : 'rgba(16, 147, 203, 1)',
+                },
+              ]}
+              disabled={isTurnOnActive}
+              onPress={() => handleBTCommand('TurnOn')}>
               <Text style={styles.colorButtonText}>TurnOn</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.colorButton, {backgroundColor: 'green'}]}
-              onPress={() => sendBTCommand('TurnOff')}>
+              style={[
+                styles.colorButton,
+                {
+                  backgroundColor: isTurnOnActive
+                    ? 'rgba(16, 147, 203, 1)'
+                    : 'rgba(16, 147, 203, 0.5)',
+                },
+              ]}
+              disabled={!isTurnOnActive}
+              onPress={() => handleBTCommand('TurnOff')}>
               <Text style={styles.colorButtonText}>TurnOff</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
-              style={[styles.colorButton, {backgroundColor: 'blue'}]}
+              style={[
+                styles.colorButton,
+                {backgroundColor: 'rgba(16, 147, 203, 1)'},
+              ]}
               onPress={() => sendBTCommand('scan_wifi')}>
               <Text style={styles.colorButtonText}>Wi-Fi Scan</Text>
             </TouchableOpacity>
