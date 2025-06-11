@@ -35,20 +35,28 @@ const Dashboard = () => {
     useContext(WifiContext);
 
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
-
-  // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [wifiPassword, setWifiPassword] = useState('');
 
+  function convertCommandToJson(command, data = []) {
+    return JSON.stringify({
+      command,
+      data,
+    });
+  }
+
   // Bluetooth Komut Gönderimi
-  const sendBTCommand = async command => {
+  const sendBTCommand = async (command, data = []) => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
       return;
     }
 
     try {
-      await writableCharacteristic.writeWithResponse(base64.encode(command));
+      const jsonString = convertCommandToJson(command, data);
+      const base64Data = base64.encode(jsonString);
+      console.log(jsonString);
+      await writableCharacteristic.writeWithResponse(base64Data);
     } catch (error) {
       Alert.alert(t('error_happened'), t('couldnt_send_data'));
     }
@@ -65,8 +73,19 @@ const Dashboard = () => {
     }
   };
 
-  // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
+  const sendCurrentTimeToESP32 = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
 
+    sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
+    sendBTCommand('get_led_status');
+  };
+
+  
+
+  // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
   const handleConnectPress = async () => {
     try {
       const bluetoothState = await manager.state();
@@ -87,24 +106,30 @@ const Dashboard = () => {
   const connectToDevice = async device => {
     try {
       setIsConnecting(true);
+      console.log('🔌 Connecting to device...');
       const connectedDevice = await manager.connectToDevice(device.id);
+      console.log('✅ Connected to device:', connectedDevice.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
 
       const services = await connectedDevice.services();
+      console.log('🔍 Services discovered');
       for (const service of services) {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
           if (char.isWritableWithResponse) {
+            console.log('🖋️ Found writable characteristic:', char.uuid);
             setWritableCharacteristic(char);
             break;
           }
         }
       }
-
       setSelectedDevice(connectedDevice);
       setStatus(t('connected'));
       setIsExpanded(false);
       manager.stopDeviceScan();
+
+      // console.log(writableCharacteristic);
+      // sendCurrentTimeToESP32(); // ESP32'ye güncel saati gonderir
 
       Alert.alert(
         t('successfully_connected'),
@@ -149,6 +174,14 @@ const Dashboard = () => {
       },
     ]);
   };
+  useEffect(() => {
+    if (writableCharacteristic) {
+      console.log(
+        '✉️ writableCharacteristic hazır. ESP32’ye zaman gönderiliyor...',
+      );
+      sendCurrentTimeToESP32();
+    }
+  }, [writableCharacteristic]);
 
   // Bluetooth'tan WiFi listesi gelince setWifiList güncellemesi (senin orijinal useEffect)
   useEffect(() => {
@@ -165,14 +198,23 @@ const Dashboard = () => {
 
               const base64Value = characteristic?.value;
               if (!base64Value) return;
-
+              console.log(characteristic?.value);
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
+
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
-              } catch {}
+                console.log(jsonData);
+                if (jsonData.command === 'initial_led_status') {
+                  const isOn = jsonData.data;
+                  console.log('💡 TyeLockOn durumu:', isOn);
+                  setIsTurnOnActive(isOn);
+                }
+              } catch (err) {
+                console.warn('⚠️ JSON parse hatası:', err.message);
+              }
             });
 
             return;
@@ -204,10 +246,11 @@ const Dashboard = () => {
     }
 
     const payload = JSON.stringify({
-      ssid: selectedSSID,
-      password: wifiPassword,
+      command: 'connect_to_wifi',
+      data: [selectedSSID, wifiPassword],
     });
 
+    console.log(payload);
     writableCharacteristic
       .writeWithResponse(base64.encode(payload))
       .then(() => {
@@ -310,7 +353,7 @@ const Dashboard = () => {
                 styles.colorButton,
                 {backgroundColor: 'rgba(16, 147, 203, 1)'},
               ]}
-              onPress={() => sendBTCommand('scan_wifi')}>
+              onPress={() => handleBTCommand('scan_wifi')}>
               <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
             </TouchableOpacity>
           </View>
