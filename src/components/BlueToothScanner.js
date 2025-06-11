@@ -118,9 +118,11 @@ const BluetoothScanner = ({
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    marginTop: 10,
-    paddingHorizontal: 16,
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    maxHeight: 140,
   },
   title: {
     fontSize: 18,
@@ -133,20 +135,13 @@ const styles = StyleSheet.create({
     marginBottom: 10, // opsiyonel, alt boşluk için
   },
   deviceItem: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
   deviceName: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
   },
 });
 

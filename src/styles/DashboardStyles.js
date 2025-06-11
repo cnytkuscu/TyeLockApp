@@ -27,7 +27,7 @@ const dashboardStyles = StyleSheet.create({
   },
   statusTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#fff',
     marginBottom: 5,
   },
@@ -51,12 +51,12 @@ const dashboardStyles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '500',
+    textAlign: 'center',
   },
   buttonDisabled: {
     backgroundColor: '#A0A0A0',
-  }, 
-   
+  },
+
   disconnectBtn: {
     borderRadius: 20,
     padding: 6,
@@ -81,9 +81,9 @@ const dashboardStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-  }, 
-  
-  deviceControlCard: { 
+  },
+
+  deviceControlCard: {
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
@@ -115,6 +115,7 @@ const dashboardStyles = StyleSheet.create({
     padding: 10,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 10,
+    maxHeight: 140,
   },
 
   wifiItem: {
@@ -141,6 +142,23 @@ const dashboardStyles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    width: '80%',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
 

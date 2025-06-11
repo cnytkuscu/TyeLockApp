@@ -1,11 +1,13 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
+  Modal,
+  Pressable,
+  FlatList,
 } from 'react-native';
 import LottieView from 'lottie-react-native';
 import {BleManager, State} from 'react-native-ble-plx';
@@ -16,8 +18,6 @@ import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
-
-import {useEffect} from 'react';
 import {WifiContext} from '../context/WifiContext';
 
 const Dashboard = () => {
@@ -30,16 +30,31 @@ const Dashboard = () => {
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
-  const {
-    wifiList,
-    setWifiList,
-    selectedSSID,
-    setSelectedSSID,
-    wifiPassword,
-    setWifiPassword,
-  } = useContext(WifiContext);
+
+  const {wifiList, setWifiList, selectedSSID, setSelectedSSID} =
+    useContext(WifiContext);
+
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
 
+  // Modal state
+  const [modalVisible, setModalVisible] = useState(false);
+  const [wifiPassword, setWifiPassword] = useState('');
+
+  // Bluetooth Komut Gönderimi
+  const sendBTCommand = async command => {
+    if (!writableCharacteristic) {
+      Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
+      return;
+    }
+
+    try {
+      await writableCharacteristic.writeWithResponse(base64.encode(command));
+    } catch (error) {
+      Alert.alert(t('error_happened'), t('couldnt_send_data'));
+    }
+  };
+
+  // TurnOn / TurnOff
   const handleBTCommand = command => {
     sendBTCommand(command);
 
@@ -49,6 +64,8 @@ const Dashboard = () => {
       setIsTurnOnActive(false);
     }
   };
+
+  // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
 
   const handleConnectPress = async () => {
     try {
@@ -70,19 +87,14 @@ const Dashboard = () => {
   const connectToDevice = async device => {
     try {
       setIsConnecting(true);
-      console.log('🔌 Connecting to device...');
       const connectedDevice = await manager.connectToDevice(device.id);
-      console.log('✅ Connected to device:', connectedDevice.id);
-
       await connectedDevice.discoverAllServicesAndCharacteristics();
-      console.log('🔍 Services discovered');
 
       const services = await connectedDevice.services();
       for (const service of services) {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
           if (char.isWritableWithResponse) {
-            console.log('🖋️ Found writable characteristic:', char.uuid);
             setWritableCharacteristic(char);
             break;
           }
@@ -99,7 +111,6 @@ const Dashboard = () => {
         `${t('connected_to')} ${device.name}`,
       );
     } catch (error) {
-      console.log('❌ Connection error:', error);
       Alert.alert(t('connection_error'), t('couldnt_connect_to_device'));
     } finally {
       setIsConnecting(false);
@@ -108,12 +119,10 @@ const Dashboard = () => {
 
     manager.monitorDeviceConnection(device.id, (error, disconnectedDevice) => {
       if (error) {
-        console.log('⚠️ Monitor error:', error);
         return;
       }
 
       if (!disconnectedDevice) {
-        console.log('🔌 Device disconnected unexpectedly');
         setStatus(t('not_connected'));
         setSelectedDevice(null);
       }
@@ -133,7 +142,7 @@ const Dashboard = () => {
             setStatus(t('not_connected'));
             setSelectedDevice(null);
             setWritableCharacteristic(null);
-          } catch (error) {
+          } catch {
             Alert.alert(t('error_happened'), t('error_on_disconnecting'));
           }
         },
@@ -141,19 +150,7 @@ const Dashboard = () => {
     ]);
   };
 
-  const sendBTCommand = async color => {
-    if (!writableCharacteristic) {
-      Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
-      return;
-    }
-
-    try {
-      await writableCharacteristic.writeWithResponse(base64.encode(color));
-    } catch (error) {
-      Alert.alert(t('error_happened'), t('couldnt_send_data'));
-    }
-  };
-
+  // Bluetooth'tan WiFi listesi gelince setWifiList güncellemesi (senin orijinal useEffect)
   useEffect(() => {
     if (!selectedDevice) return;
 
@@ -163,29 +160,19 @@ const Dashboard = () => {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
           if (char.isNotifiable) {
-            console.log('🔔 Found notifiable characteristic:', char.uuid);
-
             char.monitor((error, characteristic) => {
-              if (error) {
-                console.log('❌ Notification error:', error);
-                return;
-              }
+              if (error) return;
 
               const base64Value = characteristic?.value;
               if (!base64Value) return;
 
               try {
                 const decoded = base64.decode(base64Value);
-                console.log('📶 Notify received:', decoded);
-
                 const jsonData = JSON.parse(decoded);
-
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
-              } catch (err) {
-                console.log('❌ JSON parse error:', err.message);
-              }
+              } catch {}
             });
 
             return;
@@ -196,6 +183,42 @@ const Dashboard = () => {
 
     setupNotification();
   }, [selectedDevice]);
+
+  // WiFi SSID seçince modal aç
+  const handleSSIDPress = ssid => {
+    setSelectedSSID(ssid);
+    setWifiPassword('');
+    setModalVisible(true);
+  };
+
+  // Modal'dan gönderme işlemi
+  const handleSendWifiConfig = () => {
+    if (!writableCharacteristic) {
+      Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
+      return;
+    }
+
+    if (!selectedSSID || !wifiPassword) {
+      Alert.alert(t('error_happened'), t('please_enter_password'));
+      return;
+    }
+
+    const payload = JSON.stringify({
+      ssid: selectedSSID,
+      password: wifiPassword,
+    });
+
+    writableCharacteristic
+      .writeWithResponse(base64.encode(payload))
+      .then(() => {
+        Alert.alert(t('sent'), t('wifi_info_sent'));
+        setModalVisible(false);
+        setWifiPassword('');
+      })
+      .catch(() => {
+        Alert.alert(t('error_happened'), t('couldnt_send_data'));
+      });
+  };
 
   return (
     <View style={styles.container}>
@@ -265,7 +288,7 @@ const Dashboard = () => {
               ]}
               disabled={isTurnOnActive}
               onPress={() => handleBTCommand('TurnOn')}>
-              <Text style={styles.colorButtonText}>TurnOn</Text>
+              <Text style={styles.colorButtonText}>{t('turn_on')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -279,7 +302,7 @@ const Dashboard = () => {
               ]}
               disabled={!isTurnOnActive}
               onPress={() => handleBTCommand('TurnOff')}>
-              <Text style={styles.colorButtonText}>TurnOff</Text>
+              <Text style={styles.colorButtonText}>{t('turn_off')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -288,63 +311,89 @@ const Dashboard = () => {
                 {backgroundColor: 'rgba(16, 147, 203, 1)'},
               ]}
               onPress={() => sendBTCommand('scan_wifi')}>
-              <Text style={styles.colorButtonText}>Wi-Fi Scan</Text>
+              <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
 
+      {/* WiFi Listesi */}
       {wifiList.length > 0 && (
         <View style={styles.wifiListCard}>
           <Text style={styles.statusTitle}>{t('available_networks')}</Text>
 
-          {wifiList.map((ssid, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.wifiItem,
-                selectedSSID === ssid && {backgroundColor: 'rgba(0,0,0,0.2)'},
-              ]}
-              onPress={() => setSelectedSSID(ssid)}>
-              <Text style={styles.wifiText}>{ssid}</Text>
-            </TouchableOpacity>
-          ))}
-
-          {selectedSSID !== '' && (
-            <View style={{marginTop: 10}}>
-              <Text style={styles.wifiText}>
-                {t('enter_password_for')} "{selectedSSID}"
-              </Text>
-              <TextInput
-                style={styles.input}
-                secureTextEntry
-                value={wifiPassword}
-                onChangeText={setWifiPassword}
-                placeholder={t('wifi_password')}
-                placeholderTextColor="#ccc"
-              />
+          <FlatList
+            data={wifiList}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item}) => (
               <TouchableOpacity
-                style={styles.sendButton}
-                onPress={() => {
-                  if (!writableCharacteristic) return;
-
-                  const payload = JSON.stringify({
-                    ssid: selectedSSID,
-                    password: wifiPassword,
-                  });
-
-                  writableCharacteristic.writeWithResponse(
-                    base64.encode(payload),
-                  );
-
-                  Alert.alert(t('sent'), t('wifi_info_sent'));
-                }}>
-                <Text style={styles.buttonText}>{t('send')}</Text>
+                style={[
+                  styles.wifiItem,
+                  selectedSSID === item && {backgroundColor: 'rgba(0,0,0,0.2)'},
+                ]}
+                onPress={() => handleSSIDPress(item)}>
+                <Text style={styles.wifiText}>{item}</Text>
               </TouchableOpacity>
-            </View>
-          )}
+            )}
+          />
         </View>
       )}
+
+      {/* Şifre Girişi Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalView}>
+            <Text style={styles.statusTitle}>{selectedSSID}</Text>
+
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              placeholder={t('wifi_password')}
+              placeholderTextColor="#999"
+              value={wifiPassword}
+              onChangeText={setWifiPassword}
+              autoFocus
+            />
+
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                marginTop: 20,
+              }}>
+              <Pressable
+                style={[
+                  styles.button,
+                  {
+                    flex: 1,
+                    marginRight: 10,
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  },
+                ]}
+                onPress={() => setModalVisible(false)}>
+                <Text style={styles.buttonText}>{t('cancel')}</Text>
+              </Pressable>
+
+              <Pressable
+                style={[
+                  styles.button,
+                  {
+                    flex: 1,
+                    marginRight: 10,
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                  },
+                ]}
+                onPress={handleSendWifiConfig}>
+                <Text style={styles.buttonText}>{t('send')}</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
