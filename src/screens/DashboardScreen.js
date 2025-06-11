@@ -2,6 +2,7 @@ import React, {useState, useContext} from 'react';
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   Alert,
   ActivityIndicator,
@@ -13,9 +14,11 @@ import base64 from 'react-native-base64';
 
 import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
-import {BluetoothContext} from '../context/BluetoothContext'; 
+import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
- 
+
+import {useEffect} from 'react';
+import {WifiContext} from '../context/WifiContext';
 
 const Dashboard = () => {
   const {status, setStatus, selectedDevice, setSelectedDevice} =
@@ -26,7 +29,15 @@ const Dashboard = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
-  const {t} = useLanguage(); 
+  const {t} = useLanguage();
+  const {
+    wifiList,
+    setWifiList,
+    selectedSSID,
+    setSelectedSSID,
+    wifiPassword,
+    setWifiPassword,
+  } = useContext(WifiContext);
 
   const handleConnectPress = async () => {
     try {
@@ -119,7 +130,7 @@ const Dashboard = () => {
     ]);
   };
 
-  const sendColorCommand = async color => {
+  const sendBTCommand = async color => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
       return;
@@ -131,6 +142,49 @@ const Dashboard = () => {
       Alert.alert(t('error_happened'), t('couldnt_send_data'));
     }
   };
+
+  useEffect(() => {
+    if (!selectedDevice) return;
+
+    const setupNotification = async () => {
+      const services = await selectedDevice.services();
+      for (const service of services) {
+        const characteristics = await service.characteristics();
+        for (const char of characteristics) {
+          if (char.isNotifiable) {
+            console.log('🔔 Found notifiable characteristic:', char.uuid);
+
+            char.monitor((error, characteristic) => {
+              if (error) {
+                console.log('❌ Notification error:', error);
+                return;
+              }
+
+              const base64Value = characteristic?.value;
+              if (!base64Value) return;
+
+              try {
+                const decoded = base64.decode(base64Value);
+                console.log('📶 Notify received:', decoded);
+
+                const jsonData = JSON.parse(decoded);
+
+                if (Array.isArray(jsonData.networks)) {
+                  setWifiList(jsonData.networks);
+                }
+              } catch (err) {
+                console.log('❌ JSON parse error:', err.message);
+              }
+            });
+
+            return; 
+          }
+        }
+      }
+    };
+
+    setupNotification();
+  }, [selectedDevice]);
 
   return (
     <View style={styles.container}>
@@ -193,30 +247,80 @@ const Dashboard = () => {
         )}
       </View>
 
-      {/* RGB Renk Butonları */}
       {status === t('connected') && (
         <View style={styles.colorControlCard}>
-          <Text style={styles.statusTitle}>{t('send_color_command')}</Text>
+          <Text style={styles.statusTitle}>{t('send_bt_command')}</Text>
           <View style={styles.colorButtonRow}>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'red'}]}
-              onPress={() => sendColorCommand('TurnOn')}>
+              onPress={() => sendBTCommand('TurnOn')}>
               <Text style={styles.colorButtonText}>TurnOn</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'green'}]}
-              onPress={() => sendColorCommand('TurnOff')}>
+              onPress={() => sendBTCommand('TurnOff')}>
               <Text style={styles.colorButtonText}>TurnOff</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.colorButton, {backgroundColor: 'blue'}]}
-              onPress={() => sendColorCommand('Blue')}>
-              <Text style={styles.colorButtonText}>Blue</Text>
+              onPress={() => sendBTCommand('scan_wifi')}>
+              <Text style={styles.colorButtonText}>Wi-Fi Scan</Text>
             </TouchableOpacity>
           </View>
         </View>
       )}
-       
+
+      {wifiList.length > 0 && (
+        <View style={styles.wifiListCard}>
+          <Text style={styles.statusTitle}>{t('available_networks')}</Text>
+
+          {wifiList.map((ssid, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.wifiItem,
+                selectedSSID === ssid && {backgroundColor: 'rgba(0,0,0,0.2)'},
+              ]}
+              onPress={() => setSelectedSSID(ssid)}>
+              <Text style={styles.wifiText}>{ssid}</Text>
+            </TouchableOpacity>
+          ))}
+
+          {selectedSSID !== '' && (
+            <View style={{marginTop: 10}}>
+              <Text style={styles.wifiText}>
+                {t('enter_password_for')} "{selectedSSID}"
+              </Text>
+              <TextInput
+                style={styles.input}
+                secureTextEntry
+                value={wifiPassword}
+                onChangeText={setWifiPassword}
+                placeholder={t('wifi_password')}
+                placeholderTextColor="#ccc"
+              />
+              <TouchableOpacity
+                style={styles.sendButton}
+                onPress={() => {
+                  if (!writableCharacteristic) return;
+
+                  const payload = JSON.stringify({
+                    ssid: selectedSSID,
+                    password: wifiPassword,
+                  });
+
+                  writableCharacteristic.writeWithResponse(
+                    base64.encode(payload),
+                  );
+
+                  Alert.alert(t('sent'), t('wifi_info_sent'));
+                }}>
+                <Text style={styles.buttonText}>{t('send')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };
