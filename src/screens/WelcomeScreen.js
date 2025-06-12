@@ -14,7 +14,7 @@ import {useLanguage} from '../context/LanguageContext';
 
 const WelcomeScreen = () => {
   const navigation = useNavigation();
-  const {language, setLanguage, t} = useLanguage();  
+const { t, language, setLanguage } = useLanguage();
 
   const handlePress = () => {
     navigation.navigate('Dashboard');
@@ -31,7 +31,7 @@ const WelcomeScreen = () => {
           width: '100%',
           height: '120%',
           position: 'absolute',
-          top: 0,
+          top: -20,
           left: 0,
           bottom: 0,
           right: 0,

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import WelcomeScreen from './src/screens/WelcomeScreen';
-import Dashboard from './src/screens/DashboardScreen';
+import DashboardScreen from './src/screens/DashboardScreen';
 
 import { BluetoothProvider } from './src/context/BluetoothContext';
 import { LanguageProvider } from './src/context/LanguageContext';
@@ -21,7 +21,7 @@ const App = () => {
             <NavigationContainer>
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                <Stack.Screen name="Dashboard" component={Dashboard} />
+                <Stack.Screen name="Dashboard" component={DashboardScreen} />
               </Stack.Navigator>
             </NavigationContainer>
           </WifiProvider>
