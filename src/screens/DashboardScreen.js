@@ -37,6 +37,7 @@ const Dashboard = () => {
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [wifiPassword, setWifiPassword] = useState('');
+  const [isWifiConnected, setIsWifiConnected] = useState(false);
 
   function convertCommandToJson(command, data = []) {
     return JSON.stringify({
@@ -55,7 +56,7 @@ const Dashboard = () => {
     try {
       const jsonString = convertCommandToJson(command, data);
       const base64Data = base64.encode(jsonString);
-      console.log(jsonString);
+      console.log('📤 Gönderilen komut:', command, ' - ', jsonString);
       await writableCharacteristic.writeWithResponse(base64Data);
     } catch (error) {
       Alert.alert(t('error_happened'), t('couldnt_send_data'));
@@ -81,9 +82,8 @@ const Dashboard = () => {
 
     sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
     sendBTCommand('get_led_status');
+    sendBTCommand('wifi_status'); 
   };
-
-  
 
   // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
   const handleConnectPress = async () => {
@@ -128,9 +128,6 @@ const Dashboard = () => {
       setIsExpanded(false);
       manager.stopDeviceScan();
 
-      // console.log(writableCharacteristic);
-      // sendCurrentTimeToESP32(); // ESP32'ye güncel saati gonderir
-
       Alert.alert(
         t('successfully_connected'),
         `${t('connected_to')} ${device.name}`,
@@ -167,6 +164,8 @@ const Dashboard = () => {
             setStatus(t('not_connected'));
             setSelectedDevice(null);
             setWritableCharacteristic(null);
+            setIsWifiConnected(false);
+            setWifiList([]);
           } catch {
             Alert.alert(t('error_happened'), t('error_on_disconnecting'));
           }
@@ -183,7 +182,7 @@ const Dashboard = () => {
     }
   }, [writableCharacteristic]);
 
-  // Bluetooth'tan WiFi listesi gelince setWifiList güncellemesi (senin orijinal useEffect)
+  // Bluetooth'tan WiFi listesi gelince setWifiList guncellemesi yapiyor
   useEffect(() => {
     if (!selectedDevice) return;
 
@@ -198,7 +197,7 @@ const Dashboard = () => {
 
               const base64Value = characteristic?.value;
               if (!base64Value) return;
-              console.log(characteristic?.value);
+              // console.log(characteristic?.value);
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
@@ -206,11 +205,26 @@ const Dashboard = () => {
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
-                console.log(jsonData);
+                console.log("ESP32'den Gelen Veri : ", decoded);
                 if (jsonData.command === 'initial_led_status') {
                   const isOn = jsonData.data;
                   console.log('💡 TyeLockOn durumu:', isOn);
                   setIsTurnOnActive(isOn);
+                }
+                if (jsonData.command === 'wifi_connection_result') {
+                  console.log('💡 Wi-Fi durumu:', jsonData.data);
+                  setIsWifiConnected(jsonData.data);
+                }
+                if (jsonData.command === 'wifi_status') { 
+                  try {
+                    const dataArray = JSON.parse(jsonData.data);
+                    const [isConnected, ssid] = dataArray;
+
+                    setIsWifiConnected(isConnected);
+                    setSelectedSSID(ssid);
+                  } catch (e) {
+                    console.warn('Data parse hatası', e);
+                  }
                 }
               } catch (err) {
                 console.warn('⚠️ JSON parse hatası:', err.message);
@@ -224,6 +238,28 @@ const Dashboard = () => {
     };
 
     setupNotification();
+  }, [selectedDevice]);
+
+  //Bluetooth baglantisi koptugunda bu kisim calisiyor
+  const bleManager = new BleManager();
+  useEffect(() => {
+    if (!selectedDevice) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const connected = await bleManager.isDeviceConnected(selectedDevice.id);
+        if (!connected) {
+          setStatus(t('not_connected'));
+          setSelectedDevice(null);
+          setIsWifiConnected(false);
+          setWifiList([]);
+        }
+      } catch (error) {
+        console.error('🔌 Bağlantı kontrol hatası:', error);
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId);
   }, [selectedDevice]);
 
   // WiFi SSID seçince modal aç
@@ -250,13 +286,13 @@ const Dashboard = () => {
       data: [selectedSSID, wifiPassword],
     });
 
-    console.log(payload);
     writableCharacteristic
       .writeWithResponse(base64.encode(payload))
       .then(() => {
         Alert.alert(t('sent'), t('wifi_info_sent'));
         setModalVisible(false);
         setWifiPassword('');
+        setWifiList([]);
       })
       .catch(() => {
         Alert.alert(t('error_happened'), t('couldnt_send_data'));
@@ -273,6 +309,7 @@ const Dashboard = () => {
           width: '100%',
           height: '125%',
           position: 'absolute',
+          top: -20,
         }}
         resizeMode="cover"
       />
@@ -287,7 +324,17 @@ const Dashboard = () => {
               <Text style={styles.deviceName}>
                 {t('connected_to')} {selectedDevice.name || t('unknown_device')}
               </Text>
+
+              {/* ✅ Bağlanılan WiFi Ağı */}
+              {isWifiConnected && selectedSSID && (
+                <View style={{marginTop: 10}}>
+                  <Text style={styles.deviceName}>
+                    {t('connected_network')} {selectedSSID}
+                  </Text>
+                </View>
+              )}
             </View>
+
             <TouchableOpacity
               onPress={disconnectDevice}
               style={styles.disconnectBtn}>
@@ -382,7 +429,7 @@ const Dashboard = () => {
         </View>
       )}
 
-      {/* Şifre Girişi Modal */}
+      {/* Sifre Giris Ekrani */}
       <Modal
         animationType="slide"
         transparent={true}

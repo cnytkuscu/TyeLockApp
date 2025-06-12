@@ -146,5 +146,9 @@
   "wifi_info_sent": {
     "TR": "Bağlantı Talebi Gönderildi",
     "EN": "Connection Request Sent"
+  }, 
+  "connected_network": {
+    "TR": "Bağlanılan Ağ : ",
+    "EN": "Connected Network : "
   }
 }
