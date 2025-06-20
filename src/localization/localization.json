@@ -107,7 +107,7 @@
     "TR": "Gönderilemedi:",
     "EN": "Failed to send:"
   },
-  "no_writable_characteristic": {
+  "no_writable_characteristic_found": {
     "TR": "Yazılabilir bir karakteristik bulunamadı.",
     "EN": "No writable characteristic found."
   },

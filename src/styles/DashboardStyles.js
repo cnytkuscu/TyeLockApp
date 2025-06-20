@@ -160,6 +160,18 @@ const dashboardStyles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
+  timeContainer: {
+    marginTop: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 50,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
 });
 
 export default dashboardStyles;

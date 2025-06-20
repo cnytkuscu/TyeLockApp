@@ -7,26 +7,31 @@ import WelcomeScreen from './src/screens/WelcomeScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 
 import { BluetoothProvider } from './src/context/BluetoothContext';
-import { LanguageProvider } from './src/context/LanguageContext';
 import { WifiProvider } from './src/context/WifiContext';
+import { LanguageProvider } from './src/context/LanguageContext';
 
 const Stack = createNativeStackNavigator();
 
 const App = () => {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LanguageProvider>
-        <BluetoothProvider>
-          <WifiProvider>
+      {/* LanguageProvider EN DIŞTA TUTULDU */}
+      <BluetoothProvider>
+        <WifiProvider>
+          <LanguageProvider>
             <NavigationContainer>
               <Stack.Navigator screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Welcome" component={WelcomeScreen} />
-                <Stack.Screen name="Dashboard" component={DashboardScreen} />
+                <Stack.Screen
+                  name="Dashboard"
+                  component={DashboardScreen}
+                  options={{ unmountOnBlur: false }}
+                />
               </Stack.Navigator>
             </NavigationContainer>
-          </WifiProvider>
-        </BluetoothProvider>
-      </LanguageProvider>
+          </LanguageProvider>
+        </WifiProvider>
+      </BluetoothProvider>
     </GestureHandlerRootView>
   );
 };

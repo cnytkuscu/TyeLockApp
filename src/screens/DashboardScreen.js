@@ -21,8 +21,6 @@ import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
 
 const Dashboard = () => {
-  const {status, setStatus, selectedDevice, setSelectedDevice} =
-    useContext(BluetoothContext);
   const [isExpanded, setIsExpanded] = useState(false);
   const manager = new BleManager();
   const [isLoading, setIsLoading] = useState(false);
@@ -30,13 +28,32 @@ const Dashboard = () => {
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
+  const [currentTime, setCurrentTime] = useState({
+    hours: '--',
+    minutes: '--',
+    seconds: '--',
+  });
 
-  const {wifiList, setWifiList, selectedSSID, setSelectedSSID} =
-    useContext(WifiContext);
+  const {
+    status,
+    setStatus,
+    selectedDevice,
+    setSelectedDevice,
+    writeCharacteristic,
+    setWriteCharacteristic,
+  } = useContext(BluetoothContext);
+
+  const {
+    wifiList,
+    setWifiList,
+    selectedSSID,
+    setSelectedSSID,
+    wifiPassword,
+    setWifiPassword,
+  } = useContext(WifiContext);
 
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [wifiPassword, setWifiPassword] = useState('');
   const [isWifiConnected, setIsWifiConnected] = useState(false);
 
   function convertCommandToJson(command, data = []) {
@@ -82,7 +99,7 @@ const Dashboard = () => {
 
     sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
     sendBTCommand('get_led_status');
-    sendBTCommand('wifi_status'); 
+    sendBTCommand('wifi_status');
   };
 
   // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
@@ -173,6 +190,23 @@ const Dashboard = () => {
       },
     ]);
   };
+
+  useEffect(() => {
+    if (status === t('connected')) {
+      const interval = setInterval(() => {
+        const now = new Date();
+        setCurrentTime({
+          hours: now.getHours().toString().padStart(2, '0'),
+          minutes: now.getMinutes().toString().padStart(2, '0'),
+          seconds: now.getSeconds().toString().padStart(2, '0'),
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setCurrentTime({hours: '--', minutes: '--', seconds: '--'});
+    }
+  }, [status, t]);
+
   useEffect(() => {
     if (writableCharacteristic) {
       console.log(
@@ -215,7 +249,7 @@ const Dashboard = () => {
                   console.log('💡 Wi-Fi durumu:', jsonData.data);
                   setIsWifiConnected(jsonData.data);
                 }
-                if (jsonData.command === 'wifi_status') { 
+                if (jsonData.command === 'wifi_status') {
                   try {
                     const dataArray = JSON.parse(jsonData.data);
                     const [isConnected, ssid] = dataArray;
@@ -404,13 +438,32 @@ const Dashboard = () => {
               <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
             </TouchableOpacity>
           </View>
+          <View style={styles.timeContainer}>
+            <Text style={styles.timeText}>
+              {currentTime.hours} : {currentTime.minutes} :{' '}
+              {currentTime.seconds}
+            </Text>
+          </View>
         </View>
       )}
 
       {/* WiFi Listesi */}
       {wifiList.length > 0 && (
         <View style={styles.wifiListCard}>
-          <Text style={styles.statusTitle}>{t('available_networks')}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+            <Text style={styles.statusTitle}>{t('available_networks')}</Text>
+
+            <TouchableOpacity
+              onPress={() => setWifiList([])}
+              style={{padding: 5, marginRight: 5}}>
+              <Icon name="close-circle" size={28} color="#ff4d4d" />
+            </TouchableOpacity>
+          </View>
 
           <FlatList
             data={wifiList}
