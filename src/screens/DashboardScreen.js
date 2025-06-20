@@ -13,6 +13,7 @@ import LottieView from 'lottie-react-native';
 import {BleManager, State} from 'react-native-ble-plx';
 import Icon from 'react-native-vector-icons/Ionicons';
 import base64 from 'react-native-base64';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
@@ -54,30 +55,23 @@ const Dashboard = () => {
   }, [autoUpdateEnabled]);
 
   // Elle değişiklik yapıldığında çağrılacak fonksiyon
-  const handleManualTimeChange = (type, val) => {
-    // Otomatik güncellemeyi durduruyoruz, kullanıcı elle müdahale ediyor
+  const handleManualTimeChange = (type, val) => { 
     setAutoUpdateEnabled(false);
-
-    // Şu anki refTime'ı kopyalıyoruz, tarih bilgisini koruyoruz
+ 
     const currentRefDate = new Date(refTime.current);
-
-    // Değişiklik tipine göre ilgili alanı güncelliyoruz
+ 
     if (type === 'hour') currentRefDate.setHours(val);
     else if (type === 'minute') currentRefDate.setMinutes(val);
     else if (type === 'second') currentRefDate.setSeconds(val);
-
-    // refTime.current'ı yeni değere atıyoruz
+ 
     refTime.current = currentRefDate;
-
-    // State'leri de güncelliyoruz ki arayüzde gösterilsin
+ 
     setHour(currentRefDate.getHours());
     setMinute(currentRefDate.getMinutes());
     setSecond(currentRefDate.getSeconds());
-
-    // Daha önceki timeout varsa iptal ediyoruz (debounce)
+ 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    // 2 saniye sonra sendBTCommand çağrılır ve otomatik güncelleme tekrar aktif olur
+ 
     timeoutRef.current = setTimeout(() => {
       sendBTCommand('set_time_at_the_beginning', [
         refTime.current.getHours(),
@@ -105,6 +99,11 @@ const Dashboard = () => {
     wifiPassword,
     setWifiPassword,
   } = useContext(WifiContext);
+
+  const hapticOptions = {
+  enableVibrateFallback: true,
+  ignoreAndroidSystemSettings: false,
+};
 
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -496,6 +495,7 @@ const Dashboard = () => {
                 minWidth: 60,
               }}
               onLongPress={() => {
+                ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
                 const now = new Date();
                 refTime.current = now;
                 setHour(now.getHours());
