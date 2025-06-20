@@ -26,7 +26,7 @@ const dashboardStyles = StyleSheet.create({
     transition: 'height 0.3s ease-in-out',
   },
   statusTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
     marginBottom: 5,

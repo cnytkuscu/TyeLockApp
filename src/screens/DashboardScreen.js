@@ -1,4 +1,4 @@
-import React, {useState, useContext, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useContext} from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import base64 from 'react-native-base64';
 
 import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
+import TimePicker from '../components/TimePicker';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
@@ -28,11 +29,64 @@ const Dashboard = () => {
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
-  const [currentTime, setCurrentTime] = useState({
-    hours: '--',
-    minutes: '--',
-    seconds: '--',
-  });
+
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+  const [hour, setHour] = useState(new Date().getHours());
+  const [minute, setMinute] = useState(new Date().getMinutes());
+  const [second, setSecond] = useState(new Date().getSeconds());
+
+  const timeoutRef = useRef(null);
+  const refTime = useRef(new Date());
+
+  useEffect(() => {
+    if (!autoUpdateEnabled) return;
+
+    const interval = setInterval(() => {
+      // refTime'ı 1 saniye ileri al
+      refTime.current = new Date(refTime.current.getTime() + 1000);
+
+      setHour(refTime.current.getHours());
+      setMinute(refTime.current.getMinutes());
+      setSecond(refTime.current.getSeconds());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoUpdateEnabled]);
+
+  // Elle değişiklik yapıldığında çağrılacak fonksiyon
+  const handleManualTimeChange = (type, val) => {
+    // Otomatik güncellemeyi durduruyoruz, kullanıcı elle müdahale ediyor
+    setAutoUpdateEnabled(false);
+
+    // Şu anki refTime'ı kopyalıyoruz, tarih bilgisini koruyoruz
+    const currentRefDate = new Date(refTime.current);
+
+    // Değişiklik tipine göre ilgili alanı güncelliyoruz
+    if (type === 'hour') currentRefDate.setHours(val);
+    else if (type === 'minute') currentRefDate.setMinutes(val);
+    else if (type === 'second') currentRefDate.setSeconds(val);
+
+    // refTime.current'ı yeni değere atıyoruz
+    refTime.current = currentRefDate;
+
+    // State'leri de güncelliyoruz ki arayüzde gösterilsin
+    setHour(currentRefDate.getHours());
+    setMinute(currentRefDate.getMinutes());
+    setSecond(currentRefDate.getSeconds());
+
+    // Daha önceki timeout varsa iptal ediyoruz (debounce)
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    // 2 saniye sonra sendBTCommand çağrılır ve otomatik güncelleme tekrar aktif olur
+    timeoutRef.current = setTimeout(() => {
+      sendBTCommand('set_time_at_the_beginning', [
+        refTime.current.getHours(),
+        refTime.current.getMinutes(),
+        refTime.current.getSeconds(),
+      ]);
+      setAutoUpdateEnabled(true);
+    }, 2000);
+  };
 
   const {
     status,
@@ -63,7 +117,6 @@ const Dashboard = () => {
     });
   }
 
-  // Bluetooth Komut Gönderimi
   const sendBTCommand = async (command, data = []) => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
@@ -80,9 +133,9 @@ const Dashboard = () => {
     }
   };
 
-  // TurnOn / TurnOff
   const handleBTCommand = command => {
     sendBTCommand(command);
+    autoUpdateRef.current = true;
 
     if (command === 'TurnOn') {
       setIsTurnOnActive(true);
@@ -102,7 +155,6 @@ const Dashboard = () => {
     sendBTCommand('wifi_status');
   };
 
-  // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
   const handleConnectPress = async () => {
     try {
       const bluetoothState = await manager.state();
@@ -123,23 +175,20 @@ const Dashboard = () => {
   const connectToDevice = async device => {
     try {
       setIsConnecting(true);
-      console.log('🔌 Connecting to device...');
       const connectedDevice = await manager.connectToDevice(device.id);
-      console.log('✅ Connected to device:', connectedDevice.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
 
       const services = await connectedDevice.services();
-      console.log('🔍 Services discovered');
       for (const service of services) {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
           if (char.isWritableWithResponse) {
-            console.log('🖋️ Found writable characteristic:', char.uuid);
             setWritableCharacteristic(char);
             break;
           }
         }
       }
+
       setSelectedDevice(connectedDevice);
       setStatus(t('connected'));
       setIsExpanded(false);
@@ -157,9 +206,7 @@ const Dashboard = () => {
     }
 
     manager.monitorDeviceConnection(device.id, (error, disconnectedDevice) => {
-      if (error) {
-        return;
-      }
+      if (error) return;
 
       if (!disconnectedDevice) {
         setStatus(t('not_connected'));
@@ -192,31 +239,11 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if (status === t('connected')) {
-      const interval = setInterval(() => {
-        const now = new Date();
-        setCurrentTime({
-          hours: now.getHours().toString().padStart(2, '0'),
-          minutes: now.getMinutes().toString().padStart(2, '0'),
-          seconds: now.getSeconds().toString().padStart(2, '0'),
-        });
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setCurrentTime({hours: '--', minutes: '--', seconds: '--'});
-    }
-  }, [status, t]);
-
-  useEffect(() => {
     if (writableCharacteristic) {
-      console.log(
-        '✉️ writableCharacteristic hazır. ESP32’ye zaman gönderiliyor...',
-      );
       sendCurrentTimeToESP32();
     }
   }, [writableCharacteristic]);
 
-  // Bluetooth'tan WiFi listesi gelince setWifiList guncellemesi yapiyor
   useEffect(() => {
     if (!selectedDevice) return;
 
@@ -231,7 +258,7 @@ const Dashboard = () => {
 
               const base64Value = characteristic?.value;
               if (!base64Value) return;
-              // console.log(characteristic?.value);
+
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
@@ -239,21 +266,16 @@ const Dashboard = () => {
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
-                console.log("ESP32'den Gelen Veri : ", decoded);
                 if (jsonData.command === 'initial_led_status') {
-                  const isOn = jsonData.data;
-                  console.log('💡 TyeLockOn durumu:', isOn);
-                  setIsTurnOnActive(isOn);
+                  setIsTurnOnActive(jsonData.data);
                 }
                 if (jsonData.command === 'wifi_connection_result') {
-                  console.log('💡 Wi-Fi durumu:', jsonData.data);
                   setIsWifiConnected(jsonData.data);
                 }
                 if (jsonData.command === 'wifi_status') {
                   try {
                     const dataArray = JSON.parse(jsonData.data);
                     const [isConnected, ssid] = dataArray;
-
                     setIsWifiConnected(isConnected);
                     setSelectedSSID(ssid);
                   } catch (e) {
@@ -264,7 +286,6 @@ const Dashboard = () => {
                 console.warn('⚠️ JSON parse hatası:', err.message);
               }
             });
-
             return;
           }
         }
@@ -274,7 +295,6 @@ const Dashboard = () => {
     setupNotification();
   }, [selectedDevice]);
 
-  //Bluetooth baglantisi koptugunda bu kisim calisiyor
   const bleManager = new BleManager();
   useEffect(() => {
     if (!selectedDevice) return;
@@ -296,14 +316,12 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [selectedDevice]);
 
-  // WiFi SSID seçince modal aç
   const handleSSIDPress = ssid => {
     setSelectedSSID(ssid);
     setWifiPassword('');
     setModalVisible(true);
   };
 
-  // Modal'dan gönderme işlemi
   const handleSendWifiConfig = () => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
@@ -438,11 +456,61 @@ const Dashboard = () => {
               <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.timeContainer}>
-            <Text style={styles.timeText}>
-              {currentTime.hours} : {currentTime.minutes} :{' '}
-              {currentTime.seconds}
-            </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center', // Dikey ortalama
+              marginTop: 20,
+            }}>
+            <TimePicker
+              label="Saat"
+              maxValue={23}
+              value={hour}
+              onChange={val => handleManualTimeChange('hour', val)}
+            />
+            <TimePicker
+              label="Dakika"
+              maxValue={59}
+              value={minute}
+              onChange={val => handleManualTimeChange('minute', val)}
+            />
+            <TimePicker
+              label="Saniye"
+              maxValue={59}
+              value={second}
+              onChange={val => handleManualTimeChange('second', val)}
+            />
+
+            {/* Kompakt Refresh Butonu */}
+            <TouchableOpacity
+              style={{
+                marginLeft: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: 50, 
+                minWidth: 60,
+              }}
+              onLongPress={() => {
+                const now = new Date();
+                refTime.current = now;
+                setHour(now.getHours());
+                setMinute(now.getMinutes());
+                setSecond(now.getSeconds());
+                setAutoUpdateEnabled(true);
+                sendBTCommand('set_time_at_the_beginning', [
+                  now.getHours(),
+                  now.getMinutes(),
+                  now.getSeconds(),
+                ]);
+              }}
+              delayLongPress={500}>
+              <Icon name="refresh" size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
       )}
