@@ -62,16 +62,7 @@ const dashboardStyles = StyleSheet.create({
     padding: 6,
     marginLeft: 16,
   },
-  connectedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    marginTop: 10,
-  },
+
   deviceInfo: {
     flex: 1,
     justifyContent: 'center',
@@ -83,9 +74,21 @@ const dashboardStyles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  connectedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16, // Mevcut: 16
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    marginTop: 10,
+  },
+
   deviceControlCard: {
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16, // EKLENDİ
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
