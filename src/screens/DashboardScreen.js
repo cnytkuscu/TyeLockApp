@@ -1,4 +1,4 @@
-import React, {useState, useContext, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useContext} from 'react';
 import {
   View,
   Text,
@@ -13,16 +13,16 @@ import LottieView from 'lottie-react-native';
 import {BleManager, State} from 'react-native-ble-plx';
 import Icon from 'react-native-vector-icons/Ionicons';
 import base64 from 'react-native-base64';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 
 import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
+import TimePicker from '../components/TimePicker';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
 
 const Dashboard = () => {
-  const {status, setStatus, selectedDevice, setSelectedDevice} =
-    useContext(BluetoothContext);
   const [isExpanded, setIsExpanded] = useState(false);
   const manager = new BleManager();
   const [isLoading, setIsLoading] = useState(false);
@@ -31,12 +31,84 @@ const Dashboard = () => {
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
 
-  const {wifiList, setWifiList, selectedSSID, setSelectedSSID} =
-    useContext(WifiContext);
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
+  const [hour, setHour] = useState(new Date().getHours());
+  const [minute, setMinute] = useState(new Date().getMinutes());
+  const [second, setSecond] = useState(new Date().getSeconds());
+
+  const timeoutRef = useRef(null);
+  const refTime = useRef(new Date());
+
+  useEffect(() => {
+    if (!autoUpdateEnabled) return;
+
+    const interval = setInterval(() => {
+      // refTime'ı 1 saniye ileri al
+      refTime.current = new Date(refTime.current.getTime() + 1000);
+
+      setHour(refTime.current.getHours());
+      setMinute(refTime.current.getMinutes());
+      setSecond(refTime.current.getSeconds());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoUpdateEnabled]);
+
+  // Elle değişiklik yapıldığında çağrılacak fonksiyon
+  const handleManualTimeChange = (type, val) => {
+    setAutoUpdateEnabled(false);
+
+    const currentRefDate = new Date(refTime.current);
+
+    if (type === 'hour') currentRefDate.setHours(val);
+    else if (type === 'minute') currentRefDate.setMinutes(val);
+    else if (type === 'second') currentRefDate.setSeconds(val);
+
+    refTime.current = currentRefDate;
+
+    setHour(currentRefDate.getHours());
+    setMinute(currentRefDate.getMinutes());
+    setSecond(currentRefDate.getSeconds());
+
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      sendBTCommand('set_time_at_the_beginning', [
+        refTime.current.getHours(),
+        refTime.current.getMinutes(),
+        refTime.current.getSeconds(),
+      ]);
+      setAutoUpdateEnabled(true);
+    }, 2000);
+  };
+
+  const {
+    status,
+    setStatus,
+    selectedDevice,
+    setSelectedDevice,
+    writeCharacteristic,
+    setWriteCharacteristic,
+  } = useContext(BluetoothContext);
+
+  const {
+    wifiList,
+    setWifiList,
+    selectedSSID,
+    setSelectedSSID,
+    connectedSSID,
+    setConnectedSSID,
+    wifiPassword,
+    setWifiPassword,
+  } = useContext(WifiContext);
+
+  const hapticOptions = {
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
 
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [wifiPassword, setWifiPassword] = useState('');
   const [isWifiConnected, setIsWifiConnected] = useState(false);
 
   function convertCommandToJson(command, data = []) {
@@ -46,7 +118,6 @@ const Dashboard = () => {
     });
   }
 
-  // Bluetooth Komut Gönderimi
   const sendBTCommand = async (command, data = []) => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
@@ -63,7 +134,6 @@ const Dashboard = () => {
     }
   };
 
-  // TurnOn / TurnOff
   const handleBTCommand = command => {
     sendBTCommand(command);
 
@@ -82,10 +152,9 @@ const Dashboard = () => {
 
     sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
     sendBTCommand('get_led_status');
-    sendBTCommand('wifi_status'); 
+    sendBTCommand('wifi_status');
   };
 
-  // Cihaz Bağlantısı vb. (senin orijinal kodun aynen kaldı)
   const handleConnectPress = async () => {
     try {
       const bluetoothState = await manager.state();
@@ -140,9 +209,7 @@ const Dashboard = () => {
     }
 
     manager.monitorDeviceConnection(device.id, (error, disconnectedDevice) => {
-      if (error) {
-        return;
-      }
+      if (error) return;
 
       if (!disconnectedDevice) {
         setStatus(t('not_connected'));
@@ -173,16 +240,13 @@ const Dashboard = () => {
       },
     ]);
   };
+
   useEffect(() => {
     if (writableCharacteristic) {
-      console.log(
-        '✉️ writableCharacteristic hazır. ESP32’ye zaman gönderiliyor...',
-      );
       sendCurrentTimeToESP32();
     }
   }, [writableCharacteristic]);
 
-  // Bluetooth'tan WiFi listesi gelince setWifiList guncellemesi yapiyor
   useEffect(() => {
     if (!selectedDevice) return;
 
@@ -197,30 +261,26 @@ const Dashboard = () => {
 
               const base64Value = characteristic?.value;
               if (!base64Value) return;
-              // console.log(characteristic?.value);
+
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
-
+                console.log("ESP32'den Gelen Veri : ", decoded);
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
-                console.log("ESP32'den Gelen Veri : ", decoded);
                 if (jsonData.command === 'initial_led_status') {
-                  const isOn = jsonData.data;
-                  console.log('💡 TyeLockOn durumu:', isOn);
-                  setIsTurnOnActive(isOn);
+                  setIsTurnOnActive(jsonData.data);
                 }
                 if (jsonData.command === 'wifi_connection_result') {
-                  console.log('💡 Wi-Fi durumu:', jsonData.data);
                   setIsWifiConnected(jsonData.data);
                 }
-                if (jsonData.command === 'wifi_status') { 
+                if (jsonData.command === 'wifi_status') {
                   try {
                     const dataArray = JSON.parse(jsonData.data);
                     const [isConnected, ssid] = dataArray;
-
                     setIsWifiConnected(isConnected);
+                    setConnectedSSID(ssid);
                     setSelectedSSID(ssid);
                   } catch (e) {
                     console.warn('Data parse hatası', e);
@@ -230,7 +290,6 @@ const Dashboard = () => {
                 console.warn('⚠️ JSON parse hatası:', err.message);
               }
             });
-
             return;
           }
         }
@@ -240,7 +299,6 @@ const Dashboard = () => {
     setupNotification();
   }, [selectedDevice]);
 
-  //Bluetooth baglantisi koptugunda bu kisim calisiyor
   const bleManager = new BleManager();
   useEffect(() => {
     if (!selectedDevice) return;
@@ -262,14 +320,12 @@ const Dashboard = () => {
     return () => clearInterval(intervalId);
   }, [selectedDevice]);
 
-  // WiFi SSID seçince modal aç
   const handleSSIDPress = ssid => {
     setSelectedSSID(ssid);
     setWifiPassword('');
     setModalVisible(true);
   };
 
-  // Modal'dan gönderme işlemi
   const handleSendWifiConfig = () => {
     if (!writableCharacteristic) {
       Alert.alert(t('error_happened'), t('no_writable_characteristic_found'));
@@ -295,6 +351,7 @@ const Dashboard = () => {
         setWifiList([]);
       })
       .catch(() => {
+        setWifiList([]);
         Alert.alert(t('error_happened'), t('couldnt_send_data'));
       });
   };
@@ -326,10 +383,10 @@ const Dashboard = () => {
               </Text>
 
               {/* ✅ Bağlanılan WiFi Ağı */}
-              {isWifiConnected && selectedSSID && (
+              {isWifiConnected && connectedSSID && (
                 <View style={{marginTop: 10}}>
                   <Text style={styles.deviceName}>
-                    {t('connected_network')} {selectedSSID}
+                    {t('connected_network')} {connectedSSID}
                   </Text>
                 </View>
               )}
@@ -371,9 +428,9 @@ const Dashboard = () => {
               style={[
                 styles.colorButton,
                 {
-                  backgroundColor: isTurnOnActive
-                    ? 'rgba(16, 147, 203, 0.5)'
-                    : 'rgba(16, 147, 203, 1)',
+                  backgroundColor: !isTurnOnActive
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(255,255,255,0)',
                 },
               ]}
               disabled={isTurnOnActive}
@@ -386,8 +443,8 @@ const Dashboard = () => {
                 styles.colorButton,
                 {
                   backgroundColor: isTurnOnActive
-                    ? 'rgba(16, 147, 203, 1)'
-                    : 'rgba(16, 147, 203, 0.5)',
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(255,255,255,0)',
                 },
               ]}
               disabled={!isTurnOnActive}
@@ -398,10 +455,77 @@ const Dashboard = () => {
             <TouchableOpacity
               style={[
                 styles.colorButton,
-                {backgroundColor: 'rgba(16, 147, 203, 1)'},
+                {
+                  backgroundColor:
+                    wifiList.length > 0
+                      ? 'rgba(255,255,255,0)'
+                      : 'rgba(255,255,255,0.1)',
+                },
               ]}
-              onPress={() => handleBTCommand('scan_wifi')}>
+              onPress={() => handleBTCommand('scan_wifi')}
+              disabled={wifiList.length > 0} // Liste varsa buton disable
+            >
               <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center', // Dikey ortalama
+              marginTop: 20,
+            }}>
+            <TimePicker
+              label={t('hour')}
+              maxValue={23}
+              value={hour}
+              onChange={val => handleManualTimeChange('hour', val)}
+            />
+            <TimePicker
+              label={t('minute')}
+              maxValue={59}
+              value={minute}
+              onChange={val => handleManualTimeChange('minute', val)}
+            />
+            <TimePicker
+              label={t('second')}
+              maxValue={59}
+              value={second}
+              onChange={val => handleManualTimeChange('second', val)}
+            />
+
+            {/* Kompakt Refresh Butonu */}
+            <TouchableOpacity
+              style={{
+                marginLeft: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: 8,
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: 50,
+                minWidth: 60,
+              }}
+              onLongPress={() => {
+                ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+                if (timeoutRef.current) {
+                  clearTimeout(timeoutRef.current);
+                }
+                const now = new Date();
+                refTime.current = now;
+                setHour(now.getHours());
+                setMinute(now.getMinutes());
+                setSecond(now.getSeconds());
+                sendBTCommand('set_time_at_the_beginning', [
+                  now.getHours(),
+                  now.getMinutes(),
+                  now.getSeconds(),
+                ]);
+                setAutoUpdateEnabled(true);
+              }}
+              delayLongPress={500}>
+              <Icon name="refresh" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -410,7 +534,20 @@ const Dashboard = () => {
       {/* WiFi Listesi */}
       {wifiList.length > 0 && (
         <View style={styles.wifiListCard}>
-          <Text style={styles.statusTitle}>{t('available_networks')}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+            <Text style={styles.statusTitle}>{t('available_networks')}</Text>
+
+            <TouchableOpacity
+              onPress={() => setWifiList([])}
+              style={{padding: 5, marginRight: 5}}>
+              <Icon name="close-circle" size={28} color="#ff4d4d" />
+            </TouchableOpacity>
+          </View>
 
           <FlatList
             data={wifiList}

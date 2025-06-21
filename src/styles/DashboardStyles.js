@@ -26,7 +26,7 @@ const dashboardStyles = StyleSheet.create({
     transition: 'height 0.3s ease-in-out',
   },
   statusTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#fff',
     marginBottom: 5,
@@ -62,16 +62,7 @@ const dashboardStyles = StyleSheet.create({
     padding: 6,
     marginLeft: 16,
   },
-  connectedContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    marginTop: 10,
-  },
+
   deviceInfo: {
     flex: 1,
     justifyContent: 'center',
@@ -83,9 +74,21 @@ const dashboardStyles = StyleSheet.create({
     textAlign: 'center',
   },
 
+  connectedContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16, // Mevcut: 16
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    marginTop: 10,
+  },
+
   deviceControlCard: {
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 16, // EKLENDİ
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
@@ -111,15 +114,18 @@ const dashboardStyles = StyleSheet.create({
     fontWeight: 'bold',
   },
   wifiListCard: {
-    marginTop: 20,
+    marginTop: 30,
     padding: 10,
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
+    borderRadius: 12,
     maxHeight: 140,
+    width: '94%', // tam genişlik
+    paddingHorizontal: 20, // kenarlardan iç boşluk biraz olsun
   },
 
   wifiItem: {
     paddingVertical: 8,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
@@ -159,6 +165,18 @@ const dashboardStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+  },
+  timeContainer: {
+    marginTop: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  timeText: {
+    color: '#fff',
+    fontSize: 50,
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
 });
 

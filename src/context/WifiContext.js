@@ -1,23 +1,26 @@
-import React, { createContext, useState } from 'react';
+import React, {createContext, useState, useMemo} from 'react';
 
 export const WifiContext = createContext();
 
-export const WifiProvider = ({ children }) => {
+export const WifiProvider = ({children}) => {
   const [wifiList, setWifiList] = useState([]);
   const [selectedSSID, setSelectedSSID] = useState('');
+  const [connectedSSID, setConnectedSSID] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
 
-  return (
-    <WifiContext.Provider
-      value={{
-        wifiList,
-        setWifiList,
-        selectedSSID,
-        setSelectedSSID,
-        wifiPassword,
-        setWifiPassword,
-      }}>
-      {children}
-    </WifiContext.Provider>
+  const value = useMemo(
+    () => ({
+      wifiList,
+      setWifiList,
+      selectedSSID,
+      setSelectedSSID,
+      connectedSSID,
+      setConnectedSSID,
+      wifiPassword,
+      setWifiPassword,
+    }),
+    [wifiList, selectedSSID, connectedSSID, wifiPassword],
   );
+
+  return <WifiContext.Provider value={value}>{children}</WifiContext.Provider>;
 };
