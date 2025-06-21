@@ -18,6 +18,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
 import TimePicker from '../components/TimePicker';
+import ColorPickerBar from '../components/ColorPickerBar';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
@@ -30,6 +31,7 @@ const Dashboard = () => {
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
+  const [pickedColor, setPickedColor] = useState(null);
 
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [hour, setHour] = useState(new Date().getHours());
@@ -37,14 +39,19 @@ const Dashboard = () => {
   const [second, setSecond] = useState(new Date().getSeconds());
 
   const timeoutRef = useRef(null);
+  const [, setTick] = useState(0);
   const refTime = useRef(new Date());
 
   useEffect(() => {
     if (!autoUpdateEnabled) return;
 
     const interval = setInterval(() => {
-      // refTime'ı 1 saniye ileri al
       refTime.current = new Date(refTime.current.getTime() + 1000);
+      setTick(tick => tick + 1); // sadece yeniden render için tetikleme
+
+      const hour = refTime.current.getHours();
+      const minute = refTime.current.getMinutes();
+      const second = refTime.current.getSeconds();
 
       setHour(refTime.current.getHours());
       setMinute(refTime.current.getMinutes());
@@ -528,6 +535,10 @@ const Dashboard = () => {
               <Icon name="refresh" size={24} color="#fff" />
             </TouchableOpacity>
           </View>
+          <ColorPickerBar
+            onColorSelected={setPickedColor}
+            sendBTCommand={sendBTCommand}
+          />
         </View>
       )}
 
