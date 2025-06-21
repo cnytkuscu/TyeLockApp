@@ -87,7 +87,6 @@ const dashboardStyles = StyleSheet.create({
 
   deviceControlCard: {
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16, // EKLENDİ
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
