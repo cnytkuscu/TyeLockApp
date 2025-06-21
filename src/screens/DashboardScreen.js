@@ -55,23 +55,23 @@ const Dashboard = () => {
   }, [autoUpdateEnabled]);
 
   // Elle değişiklik yapıldığında çağrılacak fonksiyon
-  const handleManualTimeChange = (type, val) => { 
+  const handleManualTimeChange = (type, val) => {
     setAutoUpdateEnabled(false);
- 
+
     const currentRefDate = new Date(refTime.current);
- 
+
     if (type === 'hour') currentRefDate.setHours(val);
     else if (type === 'minute') currentRefDate.setMinutes(val);
     else if (type === 'second') currentRefDate.setSeconds(val);
- 
+
     refTime.current = currentRefDate;
- 
+
     setHour(currentRefDate.getHours());
     setMinute(currentRefDate.getMinutes());
     setSecond(currentRefDate.getSeconds());
- 
+
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
- 
+
     timeoutRef.current = setTimeout(() => {
       sendBTCommand('set_time_at_the_beginning', [
         refTime.current.getHours(),
@@ -96,14 +96,16 @@ const Dashboard = () => {
     setWifiList,
     selectedSSID,
     setSelectedSSID,
+    connectedSSID,
+    setConnectedSSID,
     wifiPassword,
     setWifiPassword,
   } = useContext(WifiContext);
 
   const hapticOptions = {
-  enableVibrateFallback: true,
-  ignoreAndroidSystemSettings: false,
-};
+    enableVibrateFallback: true,
+    ignoreAndroidSystemSettings: false,
+  };
 
   const [isTurnOnActive, setIsTurnOnActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -134,7 +136,6 @@ const Dashboard = () => {
 
   const handleBTCommand = command => {
     sendBTCommand(command);
-    autoUpdateRef.current = true;
 
     if (command === 'TurnOn') {
       setIsTurnOnActive(true);
@@ -174,20 +175,23 @@ const Dashboard = () => {
   const connectToDevice = async device => {
     try {
       setIsConnecting(true);
+      console.log('🔌 Connecting to device...');
       const connectedDevice = await manager.connectToDevice(device.id);
+      console.log('✅ Connected to device:', connectedDevice.id);
       await connectedDevice.discoverAllServicesAndCharacteristics();
 
       const services = await connectedDevice.services();
+      console.log('🔍 Services discovered');
       for (const service of services) {
         const characteristics = await service.characteristics();
         for (const char of characteristics) {
           if (char.isWritableWithResponse) {
+            console.log('🖋️ Found writable characteristic:', char.uuid);
             setWritableCharacteristic(char);
             break;
           }
         }
       }
-
       setSelectedDevice(connectedDevice);
       setStatus(t('connected'));
       setIsExpanded(false);
@@ -261,7 +265,7 @@ const Dashboard = () => {
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
-
+                console.log("ESP32'den Gelen Veri : ", decoded);
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
@@ -276,6 +280,7 @@ const Dashboard = () => {
                     const dataArray = JSON.parse(jsonData.data);
                     const [isConnected, ssid] = dataArray;
                     setIsWifiConnected(isConnected);
+                    setConnectedSSID(ssid);
                     setSelectedSSID(ssid);
                   } catch (e) {
                     console.warn('Data parse hatası', e);
@@ -346,6 +351,7 @@ const Dashboard = () => {
         setWifiList([]);
       })
       .catch(() => {
+        setWifiList([]);
         Alert.alert(t('error_happened'), t('couldnt_send_data'));
       });
   };
@@ -377,10 +383,10 @@ const Dashboard = () => {
               </Text>
 
               {/* ✅ Bağlanılan WiFi Ağı */}
-              {isWifiConnected && selectedSSID && (
+              {isWifiConnected && connectedSSID && (
                 <View style={{marginTop: 10}}>
                   <Text style={styles.deviceName}>
-                    {t('connected_network')} {selectedSSID}
+                    {t('connected_network')} {connectedSSID}
                   </Text>
                 </View>
               )}
@@ -422,9 +428,9 @@ const Dashboard = () => {
               style={[
                 styles.colorButton,
                 {
-                  backgroundColor: isTurnOnActive
-                    ? 'rgba(16, 147, 203, 0.5)'
-                    : 'rgba(16, 147, 203, 1)',
+                  backgroundColor: !isTurnOnActive
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(255,255,255,0)',
                 },
               ]}
               disabled={isTurnOnActive}
@@ -437,8 +443,8 @@ const Dashboard = () => {
                 styles.colorButton,
                 {
                   backgroundColor: isTurnOnActive
-                    ? 'rgba(16, 147, 203, 1)'
-                    : 'rgba(16, 147, 203, 0.5)',
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(255,255,255,0)',
                 },
               ]}
               disabled={!isTurnOnActive}
@@ -449,9 +455,16 @@ const Dashboard = () => {
             <TouchableOpacity
               style={[
                 styles.colorButton,
-                {backgroundColor: 'rgba(16, 147, 203, 1)'},
+                {
+                  backgroundColor:
+                    wifiList.length > 0
+                      ? 'rgba(255,255,255,0)'
+                      : 'rgba(255,255,255,0.1)',
+                },
               ]}
-              onPress={() => handleBTCommand('scan_wifi')}>
+              onPress={() => handleBTCommand('scan_wifi')}
+              disabled={wifiList.length > 0} // Liste varsa buton disable
+            >
               <Text style={styles.colorButtonText}>{t('scan_wifi')}</Text>
             </TouchableOpacity>
           </View>
@@ -463,19 +476,19 @@ const Dashboard = () => {
               marginTop: 20,
             }}>
             <TimePicker
-              label="Saat"
+              label={t('hour')}
               maxValue={23}
               value={hour}
               onChange={val => handleManualTimeChange('hour', val)}
             />
             <TimePicker
-              label="Dakika"
+              label={t('minute')}
               maxValue={59}
               value={minute}
               onChange={val => handleManualTimeChange('minute', val)}
             />
             <TimePicker
-              label="Saniye"
+              label={t('second')}
               maxValue={59}
               value={second}
               onChange={val => handleManualTimeChange('second', val)}
@@ -487,26 +500,29 @@ const Dashboard = () => {
                 marginLeft: 12,
                 paddingVertical: 8,
                 paddingHorizontal: 14,
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
                 borderRadius: 8,
                 justifyContent: 'center',
                 alignItems: 'center',
-                height: 50, 
+                height: 50,
                 minWidth: 60,
               }}
               onLongPress={() => {
                 ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
+                if (timeoutRef.current) {
+                  clearTimeout(timeoutRef.current);
+                }
                 const now = new Date();
                 refTime.current = now;
                 setHour(now.getHours());
                 setMinute(now.getMinutes());
                 setSecond(now.getSeconds());
-                setAutoUpdateEnabled(true);
                 sendBTCommand('set_time_at_the_beginning', [
                   now.getHours(),
                   now.getMinutes(),
                   now.getSeconds(),
                 ]);
+                setAutoUpdateEnabled(true);
               }}
               delayLongPress={500}>
               <Icon name="refresh" size={24} color="#fff" />

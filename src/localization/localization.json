@@ -150,5 +150,21 @@
   "connected_network": {
     "TR": "Bağlanılan Ağ : ",
     "EN": "Connected Network : "
+  }, 
+  "hour": {
+    "TR": "Saat",
+    "EN": "Hour"
+  }, 
+  "minute": {
+    "TR": "Dakika",
+    "EN": "Minute"
+  }, 
+  "second": {
+    "TR": "Saniye",
+    "EN": "Second"
+  }, 
+  "please_enter_password": {
+    "TR": "Lütfen Kablosuz Ağ Şifresini Giriniz.",
+    "EN": "Please Type Wireless Network Password."
   }
 }

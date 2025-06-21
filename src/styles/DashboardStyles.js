@@ -114,15 +114,18 @@ const dashboardStyles = StyleSheet.create({
     fontWeight: 'bold',
   },
   wifiListCard: {
-    marginTop: 20,
+    marginTop: 30,
     padding: 10,
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 10,
+    borderRadius: 12,
     maxHeight: 140,
+    width: '94%', // tam genişlik
+    paddingHorizontal: 20, // kenarlardan iç boşluk biraz olsun
   },
 
   wifiItem: {
     paddingVertical: 8,
+    paddingHorizontal: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
   },
