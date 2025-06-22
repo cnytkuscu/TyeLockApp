@@ -19,6 +19,7 @@ import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
 import TimePicker from '../components/TimePicker';
 import ColorPickerBar from '../components/ColorPickerBar';
+import RoundedButtonGrid from '../components/RoundedButtonGrid';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
@@ -31,12 +32,12 @@ const Dashboard = () => {
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
   const [externalColor, setExternalColor] = useState(null);
-
+  const [selectedEffect, setSelectedEffect] = useState('1');
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [hour, setHour] = useState(new Date().getHours());
   const [minute, setMinute] = useState(new Date().getMinutes());
   const [second, setSecond] = useState(new Date().getSeconds());
-
+  const [autoStatusPolling, setAutoStatusPolling] = useState(true);
   const timeoutRef = useRef(null);
   const [, setTick] = useState(0);
   const refTime = useRef(new Date());
@@ -153,8 +154,6 @@ const Dashboard = () => {
     const seconds = now.getSeconds();
 
     sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
-    // sendBTCommand('get_led_status');
-    //sendBTCommand('wifi_status');
     sendBTCommand('receive_current_state');
   };
 
@@ -244,6 +243,22 @@ const Dashboard = () => {
     ]);
   };
 
+  // Her 3 saniyede Cihazdan datayi çekiyoruz.
+  // useEffect(() => {
+  //   let statusInterval = null;
+
+  //   if (selectedDevice && writableCharacteristic && autoStatusPolling) {
+  //     statusInterval = setInterval(() => {
+  //       sendBTCommand('receive_current_state');
+  //     }, 3000);
+  //   }
+
+  //   return () => {
+  //     if (statusInterval) clearInterval(statusInterval);
+  //   };
+  // }, [selectedDevice, writableCharacteristic, autoStatusPolling]);
+
+  // GELEN KOMUTLAR BURADA HANDLE EDILIYOR !!!
   useEffect(() => {
     if (!selectedDevice || !writableCharacteristic) return;
 
@@ -270,7 +285,17 @@ const Dashboard = () => {
                   setIsTurnOnActive(jsonData.data);
                 }
                 if (jsonData.command === 'wifi_connection_result') {
-                  setIsWifiConnected(jsonData.data);
+                  const isConnected = jsonData.data === true;
+                  setIsWifiConnected(isConnected);
+
+                  if (isConnected) {
+                    Alert.alert(t('success'), t('wifi_connected_successfully'));
+                  } else {
+                    Alert.alert(
+                      t('error_happened'),
+                      t('wifi_connection_failed'),
+                    );
+                  }
                 }
                 if (jsonData.command === 'wifi_status') {
                   try {
@@ -295,12 +320,12 @@ const Dashboard = () => {
                   setExternalColor(`rgb(${color_r}, ${color_g}, ${color_b})`);
                 }
                 if (jsonData.command === 'tyelock_lightning_effect') {
+                  setSelectedEffect(jsonData.data);
                 }
                 if (jsonData.command === 'tyelock_current_hour') {
                 }
                 if (jsonData.command === 'tyelock_connected_to_wifi') {
                   setIsWifiConnected(jsonData.data);
-                  console.log(jsonData.data);
                 }
                 if (jsonData.command === 'tyelock_connected_wifi_SSID') {
                   setConnectedSSID(jsonData.data);
@@ -369,7 +394,7 @@ const Dashboard = () => {
     writableCharacteristic
       .writeWithResponse(base64.encode(payload))
       .then(() => {
-        Alert.alert(t('sent'), t('wifi_info_sent'));
+        sendBTCommand('receive_current_state');
         setModalVisible(false);
         setWifiPassword('');
         setWifiList([]);
@@ -553,8 +578,34 @@ const Dashboard = () => {
           <ColorPickerBar
             sendBTCommand={sendBTCommand}
             externalColor={externalColor}
+            onColorSelected={color => setExternalColor(color)}
           />
         </View>
+      )}
+
+      {/* LED MODLARI */}
+      {status === t('connected') && (
+        <RoundedButtonGrid
+          buttonSize={130}
+          buttonSpacing={30}
+          selectedId={selectedEffect}
+          buttons={[
+            {id: 1, label: t('static_color')},
+            {id: 2, label: t('breathing')},
+            {id: 3, label: t('rainbow')},
+            {id: 4, label: t('pulsing_star')},
+          ]}
+          selectedColor={externalColor}
+          onLongPressSendBT={id => {
+            setSelectedEffect(id);
+            sendBTCommand('set_effect_mode', [id]);
+          }} 
+          getButtonOpacity={id => { 
+            if (id === 2) return 1; 
+            if (id === selectedEffect) return 1; 
+            return 0.5;
+          }}
+        />
       )}
 
       {/* WiFi Listesi */}
