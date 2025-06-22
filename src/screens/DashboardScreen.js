@@ -19,6 +19,7 @@ import styles from '../styles/DashboardStyles';
 import BluetoothScanner from '../components/BlueToothScanner';
 import TimePicker from '../components/TimePicker';
 import ColorPickerBar from '../components/ColorPickerBar';
+import RoundedButtonGrid from '../components/RoundedButtonGrid';
 import {BluetoothContext} from '../context/BluetoothContext';
 import {useLanguage} from '../context/LanguageContext';
 import {WifiContext} from '../context/WifiContext';
@@ -26,32 +27,50 @@ import {WifiContext} from '../context/WifiContext';
 const Dashboard = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const manager = new BleManager();
-  const [isLoading, setIsLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectingDeviceId, setConnectingDeviceId] = useState(null);
   const [writableCharacteristic, setWritableCharacteristic] = useState(null);
   const {t} = useLanguage();
-  const [pickedColor, setPickedColor] = useState(null);
-
+  const [externalColor, setExternalColor] = useState(null);
+  const [selectedEffect, setSelectedEffect] = useState('1');
   const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
   const [hour, setHour] = useState(new Date().getHours());
   const [minute, setMinute] = useState(new Date().getMinutes());
   const [second, setSecond] = useState(new Date().getSeconds());
-
+  const [autoStatusPolling, setAutoStatusPolling] = useState(true);
   const timeoutRef = useRef(null);
   const [, setTick] = useState(0);
   const refTime = useRef(new Date());
+  const {
+    status,
+    setStatus,
+    selectedDevice,
+    setSelectedDevice,
+    writeCharacteristic,
+    setWriteCharacteristic,
+  } = useContext(BluetoothContext);
+  const {
+    wifiList,
+    setWifiList,
+    selectedSSID,
+    setSelectedSSID,
+    connectedSSID,
+    setConnectedSSID,
+    wifiPassword,
+    setWifiPassword,
+  } = useContext(WifiContext);
 
+  const [isTurnOnActive, setIsTurnOnActive] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [isWifiConnected, setIsWifiConnected] = useState(false);
+
+  // her saniye saati degistiriyor
   useEffect(() => {
     if (!autoUpdateEnabled) return;
 
     const interval = setInterval(() => {
       refTime.current = new Date(refTime.current.getTime() + 1000);
       setTick(tick => tick + 1); // sadece yeniden render için tetikleme
-
-      const hour = refTime.current.getHours();
-      const minute = refTime.current.getMinutes();
-      const second = refTime.current.getSeconds();
 
       setHour(refTime.current.getHours());
       setMinute(refTime.current.getMinutes());
@@ -61,7 +80,7 @@ const Dashboard = () => {
     return () => clearInterval(interval);
   }, [autoUpdateEnabled]);
 
-  // Elle değişiklik yapıldığında çağrılacak fonksiyon
+  // Elle saatte değişiklik yapıldığında çağrılacak fonksiyon
   const handleManualTimeChange = (type, val) => {
     setAutoUpdateEnabled(false);
 
@@ -89,34 +108,11 @@ const Dashboard = () => {
     }, 2000);
   };
 
-  const {
-    status,
-    setStatus,
-    selectedDevice,
-    setSelectedDevice,
-    writeCharacteristic,
-    setWriteCharacteristic,
-  } = useContext(BluetoothContext);
-
-  const {
-    wifiList,
-    setWifiList,
-    selectedSSID,
-    setSelectedSSID,
-    connectedSSID,
-    setConnectedSSID,
-    wifiPassword,
-    setWifiPassword,
-  } = useContext(WifiContext);
-
+  // reset time'da telefon titremesi
   const hapticOptions = {
     enableVibrateFallback: true,
     ignoreAndroidSystemSettings: false,
   };
-
-  const [isTurnOnActive, setIsTurnOnActive] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [isWifiConnected, setIsWifiConnected] = useState(false);
 
   function convertCommandToJson(command, data = []) {
     return JSON.stringify({
@@ -151,15 +147,14 @@ const Dashboard = () => {
     }
   };
 
-  const sendCurrentTimeToESP32 = () => {
+  const SyncAndConfigureConnectedDevice = () => {
     const now = new Date();
     const hours = now.getHours();
     const minutes = now.getMinutes();
     const seconds = now.getSeconds();
 
     sendBTCommand('set_time_at_the_beginning', [hours, minutes, seconds]);
-    sendBTCommand('get_led_status');
-    sendBTCommand('wifi_status');
+    sendBTCommand('receive_current_state');
   };
 
   const handleConnectPress = async () => {
@@ -248,14 +243,24 @@ const Dashboard = () => {
     ]);
   };
 
-  useEffect(() => {
-    if (writableCharacteristic) {
-      sendCurrentTimeToESP32();
-    }
-  }, [writableCharacteristic]);
+  // Her 3 saniyede Cihazdan datayi çekiyoruz.
+  // useEffect(() => {
+  //   let statusInterval = null;
 
+  //   if (selectedDevice && writableCharacteristic && autoStatusPolling) {
+  //     statusInterval = setInterval(() => {
+  //       sendBTCommand('receive_current_state');
+  //     }, 3000);
+  //   }
+
+  //   return () => {
+  //     if (statusInterval) clearInterval(statusInterval);
+  //   };
+  // }, [selectedDevice, writableCharacteristic, autoStatusPolling]);
+
+  // GELEN KOMUTLAR BURADA HANDLE EDILIYOR !!!
   useEffect(() => {
-    if (!selectedDevice) return;
+    if (!selectedDevice || !writableCharacteristic) return;
 
     const setupNotification = async () => {
       const services = await selectedDevice.services();
@@ -272,7 +277,7 @@ const Dashboard = () => {
               try {
                 const decoded = base64.decode(base64Value);
                 const jsonData = JSON.parse(decoded);
-                console.log("ESP32'den Gelen Veri : ", decoded);
+                console.log('♻️ Gelen Yanıt: ', decoded);
                 if (Array.isArray(jsonData.networks)) {
                   setWifiList(jsonData.networks);
                 }
@@ -280,7 +285,17 @@ const Dashboard = () => {
                   setIsTurnOnActive(jsonData.data);
                 }
                 if (jsonData.command === 'wifi_connection_result') {
-                  setIsWifiConnected(jsonData.data);
+                  const isConnected = jsonData.data === true;
+                  setIsWifiConnected(isConnected);
+
+                  if (isConnected) {
+                    Alert.alert(t('success'), t('wifi_connected_successfully'));
+                  } else {
+                    Alert.alert(
+                      t('error_happened'),
+                      t('wifi_connection_failed'),
+                    );
+                  }
                 }
                 if (jsonData.command === 'wifi_status') {
                   try {
@@ -293,10 +308,37 @@ const Dashboard = () => {
                     console.warn('Data parse hatası', e);
                   }
                 }
+                if (jsonData.command === 'tyelock_brightness') {
+                }
+                if (jsonData.command === 'tyelock_color') {
+                  const dataArray = JSON.parse(jsonData.data);
+                  const rgbList = dataArray[1];
+
+                  const color_r = rgbList[0]?.r ?? 0;
+                  const color_g = rgbList[1]?.g ?? 0;
+                  const color_b = rgbList[2]?.b ?? 0;
+                  setExternalColor(`rgb(${color_r}, ${color_g}, ${color_b})`);
+                }
+                if (jsonData.command === 'tyelock_lightning_effect') {
+                  setSelectedEffect(jsonData.data);
+                }
+                if (jsonData.command === 'tyelock_current_hour') {
+                }
+                if (jsonData.command === 'tyelock_connected_to_wifi') {
+                  setIsWifiConnected(jsonData.data);
+                }
+                if (jsonData.command === 'tyelock_connected_wifi_SSID') {
+                  setConnectedSSID(jsonData.data);
+                  setSelectedSSID(jsonData.data);
+                }
+                if (jsonData.command === 'tyelock_tyelock_is_on') {
+                  setIsTurnOnActive(jsonData.data);
+                }
               } catch (err) {
                 console.warn('⚠️ JSON parse hatası:', err.message);
               }
             });
+            SyncAndConfigureConnectedDevice();
             return;
           }
         }
@@ -304,7 +346,7 @@ const Dashboard = () => {
     };
 
     setupNotification();
-  }, [selectedDevice]);
+  }, [selectedDevice, writableCharacteristic]);
 
   const bleManager = new BleManager();
   useEffect(() => {
@@ -352,7 +394,7 @@ const Dashboard = () => {
     writableCharacteristic
       .writeWithResponse(base64.encode(payload))
       .then(() => {
-        Alert.alert(t('sent'), t('wifi_info_sent'));
+        sendBTCommand('receive_current_state');
         setModalVisible(false);
         setWifiPassword('');
         setWifiList([]);
@@ -516,9 +558,7 @@ const Dashboard = () => {
               }}
               onLongPress={() => {
                 ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
-                if (timeoutRef.current) {
-                  clearTimeout(timeoutRef.current);
-                }
+                clearTimeout(timeoutRef.current);
                 const now = new Date();
                 refTime.current = now;
                 setHour(now.getHours());
@@ -536,10 +576,36 @@ const Dashboard = () => {
             </TouchableOpacity>
           </View>
           <ColorPickerBar
-            onColorSelected={setPickedColor}
             sendBTCommand={sendBTCommand}
+            externalColor={externalColor}
+            onColorSelected={color => setExternalColor(color)}
           />
         </View>
+      )}
+
+      {/* LED MODLARI */}
+      {status === t('connected') && (
+        <RoundedButtonGrid
+          buttonSize={130}
+          buttonSpacing={30}
+          selectedId={selectedEffect}
+          buttons={[
+            {id: 1, label: t('static_color')},
+            {id: 2, label: t('breathing')},
+            {id: 3, label: t('rainbow')},
+            {id: 4, label: t('pulsing_star')},
+          ]}
+          selectedColor={externalColor}
+          onLongPressSendBT={id => {
+            setSelectedEffect(id);
+            sendBTCommand('set_effect_mode', [id]);
+          }} 
+          getButtonOpacity={id => { 
+            if (id === 2) return 1; 
+            if (id === selectedEffect) return 1; 
+            return 0.5;
+          }}
+        />
       )}
 
       {/* WiFi Listesi */}

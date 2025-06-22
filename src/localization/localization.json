@@ -107,10 +107,6 @@
     "TR": "Gönderilemedi:",
     "EN": "Failed to send:"
   },
-  "no_writable_characteristic_found": {
-    "TR": "Yazılabilir bir karakteristik bulunamadı.",
-    "EN": "No writable characteristic found."
-  },
   "send_bt_command": {
     "TR": "Fonksiyon Butonları",
     "EN": "Function Buttons"
@@ -139,32 +135,64 @@
     "TR": "Gönder",
     "EN": "Send"
   },
+  "connected_network": {
+    "TR": "Bağlanılan Ağ : ",
+    "EN": "Connected Network : "
+  },
+  "hour": {
+    "TR": "Saat",
+    "EN": "Hour"
+  },
+  "minute": {
+    "TR": "Dakika",
+    "EN": "Minute"
+  },
+  "second": {
+    "TR": "Saniye",
+    "EN": "Second"
+  },
+  "please_enter_password": {
+    "TR": "Lütfen Kablosuz Ağ Şifresini Giriniz.",
+    "EN": "Please Type Wireless Network Password."
+  },
+  "couldnt_send_data": {
+    "TR": "İstek Gönderilemedi",
+    "EN": "Couldn't Send Request."
+  },
+  "wifi_connected_successfully": {
+    "TR": "Wi-Fi ağına başarıyla bağlanıldı.",
+    "EN": "Successfully connected to Wi-Fi network."
+  },
+  "wifi_connection_failed": {
+    "TR": "Wi-Fi ağına bağlanılamadı. Lütfen şifreyi kontrol edin.",
+    "EN": "Failed to connect to Wi-Fi. Please check the password."
+  },
+  "wifi_info_sent": {
+    "TR": "Wi-Fi bilgisi gönderildi.",
+    "EN": "Wi-Fi info sent."
+  },
   "sent": {
     "TR": "Gönderildi",
     "EN": "Sent"
   },
-  "wifi_info_sent": {
-    "TR": "Bağlantı Talebi Gönderildi",
-    "EN": "Connection Request Sent"
-  }, 
-  "connected_network": {
-    "TR": "Bağlanılan Ağ : ",
-    "EN": "Connected Network : "
-  }, 
-  "hour": {
-    "TR": "Saat",
-    "EN": "Hour"
-  }, 
-  "minute": {
-    "TR": "Dakika",
-    "EN": "Minute"
-  }, 
-  "second": {
-    "TR": "Saniye",
-    "EN": "Second"
-  }, 
-  "please_enter_password": {
-    "TR": "Lütfen Kablosuz Ağ Şifresini Giriniz.",
-    "EN": "Please Type Wireless Network Password."
+  "no_writable_characteristic_found": {
+    "TR": "Yazılabilir Bluetooth özelliği bulunamadı.",
+    "EN": "No writable Bluetooth characteristic found."
+  },
+  "static_color": {
+    "TR": "Sabit Renk",
+    "EN": "Static Color"
+  },
+  "breathing": {
+    "TR": "Nefes Alma",
+    "EN": "Breathing"
+  },
+  "rainbow": {
+    "TR": "Gökkuşağı",
+    "EN": "Rainbow"
+  },
+  "pulsing_star": {
+    "TR": "Parlayan Yıldız",
+    "EN": "Pulsing Star"
   }
 }
