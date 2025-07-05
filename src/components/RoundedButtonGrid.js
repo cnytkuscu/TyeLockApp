@@ -9,8 +9,8 @@ const screenWidth = Dimensions.get('window').width;
 const RoundedButtonGrid = ({
   buttons = [],
   onLongPressSendBT,
-  buttonSize = 120,
-  buttonSpacing = 30,
+  buttonSize = 100,
+  buttonSpacing = 10,
   selectedId = null,
   selectedColor = '#00aaff',
 }) => {
@@ -70,8 +70,7 @@ const RoundedButtonGrid = ({
                 styles.button,
                 {
                   width: buttonSize,
-                  height: buttonSize,
-                  marginRight: index % 2 === 0 ? buttonSpacing : 0,
+                  height: buttonSize
                 },
               ]}
               onLongPress={() => {
@@ -97,7 +96,7 @@ const RoundedButtonGrid = ({
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    marginTop: 30,
+    marginTop: 10,
   },
   gridContainer: {
     flexDirection: 'row',
@@ -109,7 +108,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center', // Dikey ortalama
     alignItems: 'center', // Yatay ortalama
-    marginBottom: 30,
+    marginBottom: 10,
+    marginRight:10
   },
   buttonText: {
     fontWeight: '600',
