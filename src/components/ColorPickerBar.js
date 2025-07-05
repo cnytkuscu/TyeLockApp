@@ -20,7 +20,6 @@ const ColorPickerBar = ({onColorSelected, sendBTCommand, externalColor}) => {
   const hueValue = useSharedValue(0);
   const colorSendTimeout = useRef(null);
 
-  // externalColor güncellemesi: eski kodla birebir
   useEffect(() => {
     if (!externalColor) return;
     const match = externalColor.match(/\d+/g);
@@ -33,7 +32,6 @@ const ColorPickerBar = ({onColorSelected, sendBTCommand, externalColor}) => {
     }
   }, [externalColor]);
 
-  // Komutu orijinal debounce ile gönder (1 000 ms)
   const scheduleBT = hue => {
     const [r, g, b] = hslToRgb(hue, 100, 50);
     if (colorSendTimeout.current) clearTimeout(colorSendTimeout.current);
@@ -42,7 +40,6 @@ const ColorPickerBar = ({onColorSelected, sendBTCommand, externalColor}) => {
     }, 1000);
   };
 
-  // Pan gesture handler
   const gestureHandler = useAnimatedGestureHandler({
     onStart: (_, ctx) => {
       ctx.startX = translateX.value;
@@ -55,17 +52,14 @@ const ColorPickerBar = ({onColorSelected, sendBTCommand, externalColor}) => {
       const hue = Math.round((x / BAR_WIDTH) * 360);
       hueValue.value = hue;
 
-      // Eski onColorSelected API’siyle uyumlu: rgb string
       const [r, g, b] = hslToRgb(hue, 100, 50);
       runOnJS(onColorSelected)(`rgb(${r},${g},${b})`);
 
-      // Bluetooth’u orijinal şekilde tetikle
       runOnJS(scheduleBT)(hue);
     },
   });
 
   const thumbStyle = useAnimatedStyle(() => {
-    // hslToRgb'un worklet olarak da çalışabilmesi için fonksiyona başına `'worklet';` eklediğinden emin ol:
     const [r, g, b] = hslToRgb(hueValue.value, 100, 50);
     return {
       transform: [{translateX: translateX.value - THUMB_SIZE / 2}],
@@ -96,7 +90,6 @@ const ColorPickerBar = ({onColorSelected, sendBTCommand, externalColor}) => {
   );
 };
 
-// Yardımcılar (aynı kodu kullanıyoruz)
 function hslToRgb(h, s, l) {
   'worklet';
   s /= 100;
