@@ -13,9 +13,8 @@ const dashboardStyles = StyleSheet.create({
   },
   connectionStatusCard: {
     backgroundColor: 'rgba(16, 147, 203, 0)',
-    borderRadius: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    borderRadius: 20, 
+    paddingBottom: 10,
     width: '95%',
     alignItems: 'center',
     shadowColor: '#000',
@@ -78,7 +77,7 @@ const dashboardStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16, // Mevcut: 16
+    paddingHorizontal: 16,  
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
@@ -87,11 +86,10 @@ const dashboardStyles = StyleSheet.create({
 
   deviceControlCard: {
     alignItems: 'center',
-    paddingHorizontal: 16, // EKLENDİ
+    paddingHorizontal: 16,  
     paddingVertical: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    marginTop: 10,
   },
 
   colorButtonRow: {
@@ -113,13 +111,12 @@ const dashboardStyles = StyleSheet.create({
     fontWeight: 'bold',
   },
   wifiListCard: {
-    marginTop: 30,
     padding: 10,
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    maxHeight: 140,
-    width: '94%', // tam genişlik
-    paddingHorizontal: 20, // kenarlardan iç boşluk biraz olsun
+    maxHeight: 160,
+    width: '94%',  
+    paddingHorizontal: 20,  
   },
 
   wifiItem: {
